@@ -1,0 +1,8 @@
+{
+  "name": "bytesizedarcade",
+  "version": "1.0.0",
+  "description": "Bytesized Arcade - Retro web games",
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4"
+  }
+}
