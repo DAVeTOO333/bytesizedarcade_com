@@ -273,6 +273,8 @@
       document.getElementById('guess-input').value = '';
       document.getElementById('guess-input').focus();
       document.getElementById('action-btn').textContent = 'GIVE UP';
+      document.getElementById('hints-box').style.display = 'none';
+      document.getElementById('hints-box').innerHTML = '';
 
       updateHeader();
       updateHintButton();
