@@ -113,7 +113,7 @@ function scoreSimilarity(secret, guess, allSongs) {
 function scoreUnknownSong(secret, guessText, allSongs) {
   const gl = guessText.toLowerCase();
   let score = 50;
-  let hint = "Not in the 80s database — shooting in the dark!";
+  let hint = "Not in the database — shooting in the dark!";
 
   const artistMatch = allSongs.find(s => gl.includes(s.artist.toLowerCase()));
   if (artistMatch) {
