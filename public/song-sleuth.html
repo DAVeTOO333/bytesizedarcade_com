@@ -151,15 +151,16 @@
   <div class="description">
     A secret song is chosen. Type song titles and find out how close you are. Use the clues to zero in on the answer.
   </div>
-  <div class="era-label">CHOOSE YOUR CATEGORY</div>
+  <div class="era-label">CHOOSE YOUR ERA</div>
   <button class="era-btn" onclick="startGame('80s_top10')">🎵 80's TOP 10 HITS</button>
+  <button class="era-btn" onclick="startGame('90s_rap')" style="margin-top:4px">🎤 90's RAP & HIP HOP</button>
   <div class="locked-grid">
     <div class="locked-btn">🔒 70's HITS</div>
-    <div class="locked-btn">🔒 90's HITS</div>
     <div class="locked-btn">🔒 2000's HITS</div>
-    <div class="locked-btn">🔒 ALL DECADES</div>
+    <div class="locked-btn">🔒 PUNK</div>
+    <div class="locked-btn">🔒 ALL CATEGORIES</div>
   </div>
-  <div class="coming-soon">More categories coming soon...</div>
+  <div class="coming-soon">More eras coming soon...</div>
   <div class="site-name">BYTESIZEDARCADE.COM</div>
 </div>
 
@@ -190,7 +191,7 @@
   <div class="guesses-container" id="guesses-container">
     <div class="empty-state" id="empty-state">
       <div class="empty-emoji">🎵</div>
-      <div class="empty-text">A secret 80s song has been chosen</div>
+      <div class="empty-text">A secret song has been chosen</div>
       <div class="empty-sub" id="empty-sub"></div>
     </div>
   </div>
@@ -207,6 +208,12 @@
   let bonusHintOrder = [];
   let gameWon = false;
   let revealSecret = false;
+  let currentCategory = '80s_top10';
+
+  const categoryLabels = {
+    '80s_top10': "🎵 80's Top 10",
+    '90s_rap': "🎤 90's Rap & Hip Hop",
+  };
 
   function shuffleArray(arr) {
     const a = [...arr];
@@ -256,6 +263,7 @@
 
       sessionId = data.session_id;
       songCount = data.song_count;
+      currentCategory = category;
       guesses = [];
       hintsUsed = 0;
       hintMessages = [];
@@ -268,8 +276,8 @@
       document.getElementById('game-screen').style.display = 'flex';
       document.getElementById('input-area').style.display = 'block';
       document.getElementById('result-area').innerHTML = '';
-      document.getElementById('db-count').textContent = `${songCount} Billboard Top 10 hits in the database`;
-      document.getElementById('empty-sub').textContent = `${songCount} Billboard Top 10 hits in the database`;
+      document.getElementById('db-count').textContent = `${songCount} songs in the database`;
+      document.getElementById('empty-sub').textContent = `${songCount} songs in the database`;
       document.getElementById('guess-input').value = '';
       document.getElementById('guess-input').focus();
       document.getElementById('action-btn').textContent = 'GIVE UP';
@@ -355,7 +363,7 @@
 
   async function handleAction() {
     if (gameWon || revealSecret) {
-      startGame('80s_top10');
+      startGame(currentCategory);
     } else {
       try {
         const res = await fetch('/.netlify/functions/give-up', {
@@ -372,7 +380,7 @@
           <div class="result-box lose" style="margin-top:8px; padding:14px; background:rgba(255,255,255,0.05); border-radius:8px; font-size:14px; color:#888; text-align:center;">
             The answer was: <span style="color:#ffaa33; font-family:'Righteous',cursive;">${data.title} - ${data.artist}</span>
             <div style="margin-top:10px;">
-              <button class="play-again-btn" onclick="startGame('80s_top10')">PLAY AGAIN</button>
+              <button class="play-again-btn" onclick="startGame(currentCategory)">PLAY AGAIN</button>
             </div>
           </div>
         `;
@@ -398,7 +406,7 @@
         <div class="result-stats">
           Solved in ${guesses.length}${penalty > 0 ? ` + ${penalty} penalty` : ''} = ${total} guesses${noHints}
         </div>
-        <button class="play-again-btn" onclick="startGame('80s_top10')">PLAY AGAIN</button>
+        <button class="play-again-btn" onclick="startGame(currentCategory)">PLAY AGAIN</button>
       </div>
     `;
     document.getElementById('action-btn').textContent = 'NEW GAME';
@@ -406,7 +414,8 @@
 
   function updateHeader() {
     const penalty = hintsUsed > 0 ? ` (+${hintsUsed * 5})` : '';
-    document.getElementById('header-info').textContent = `🎵 80's Top 10 · Guesses: ${guesses.length}${penalty}`;
+    const label = categoryLabels[currentCategory] || currentCategory;
+    document.getElementById('header-info').textContent = `${label} · Guesses: ${guesses.length}${penalty}`;
   }
 
   function updateHintButton() {
