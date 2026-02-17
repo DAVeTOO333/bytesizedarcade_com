@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Song Sleuth - Bytesized Arcade</title>
+  <link href="https://fonts.googleapis.com/css2?family=Righteous&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2a 50%, #0a0a1a 100%);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+
+    /* TITLE SCREEN */
+    #title-screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .music-notes { font-size: 14px; letter-spacing: 6px; color: #ff6633; margin-bottom: 12px; font-weight: 300; }
+    .game-title {
+      font-family: 'Righteous', cursive;
+      font-size: 48px;
+      background: linear-gradient(90deg, #ff6633, #ffaa33, #ff6633, #ffaa33);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 3s linear infinite;
+      margin-bottom: 8px;
+    }
+    .subtitle { font-size: 16px; color: #8888aa; font-weight: 300; letter-spacing: 2px; }
+    .description { font-size: 13px; color: #aaaacc; margin: 20px 0; line-height: 1.6; max-width: 400px; text-align: center; }
+    .era-label { font-size: 11px; letter-spacing: 4px; color: #ff6633; margin-bottom: 16px; font-weight: 600; }
+    .era-btn {
+      width: 100%; max-width: 400px; padding: 16px 20px;
+      background: rgba(255,102,51,0.08); border: 1px solid #ff663340;
+      border-radius: 8px; color: #ffaa33; font-size: 18px;
+      font-family: 'Righteous', cursive; cursor: pointer;
+      transition: all 0.2s; margin-bottom: 8px;
+    }
+    .era-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(255,100,50,0.3); border-color: #ff6633; }
+    .locked-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; max-width: 400px; width: 100%; }
+    .locked-btn {
+      padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid #ffffff10;
+      border-radius: 8px; color: #666; font-size: 11px; font-family: 'Righteous', cursive;
+    }
+    .coming-soon { font-size: 11px; color: #555; margin-top: 16px; }
+    .site-name { margin-top: 40px; font-size: 11px; color: #444; }
+
+    /* GAME SCREEN */
+    #game-screen { display: none; flex: 1; flex-direction: column; padding: 16px; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .header-title { font-family: 'Righteous', cursive; font-size: 20px; color: #ff6633; cursor: pointer; }
+    .header-info { font-size: 12px; color: #8888aa; }
+    .header-btn {
+      background: rgba(255,255,255,0.05); border: 1px solid #333; border-radius: 6px;
+      color: #888; font-size: 11px; padding: 6px 12px; cursor: pointer;
+    }
+    .input-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .guess-input {
+      flex: 1; padding: 12px 16px; background: rgba(255,255,255,0.05);
+      border: 1px solid #333; border-radius: 8px; color: #eee; font-size: 15px; outline: none;
+    }
+    .guess-input:focus { border-color: #ff663380; }
+    .guess-btn {
+      padding: 12px 20px; background: rgba(255,102,51,0.2); border: 1px solid #ff6633;
+      border-radius: 8px; color: #ff6633; font-size: 14px;
+      font-family: 'Righteous', cursive; cursor: pointer; min-width: 80px;
+    }
+    .guess-btn:disabled { background: #333; border-color: #444; color: #666; cursor: default; }
+    .info-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+    .db-count { font-size: 11px; color: #555; }
+    .hint-btn {
+      border-radius: 6px; font-size: 11px; padding: 4px 10px; cursor: pointer; border: 1px solid;
+    }
+    .hint-btn.available { background: rgba(255,170,51,0.1); border-color: #ffaa3340; color: #ffaa33; }
+    .hint-btn.locked { background: rgba(255,255,255,0.03); border-color: #333; color: #555; cursor: default; }
+    .hints-box {
+      margin-top: 8px; padding: 10px; background: rgba(255,170,51,0.06);
+      border: 1px solid #ffaa3320; border-radius: 8px;
+    }
+    .hint-msg { font-size: 12px; color: #ffaa33; margin-bottom: 4px; }
+    .hint-msg:last-child { margin-bottom: 0; }
+
+    /* RESULT BOXES */
+    .result-box {
+      border-radius: 10px; padding: 20px; text-align: center; margin-bottom: 16px;
+    }
+    .result-box.win { background: rgba(255,34,34,0.1); border: 1px solid #ff333360; }
+    .result-box.lose { background: rgba(255,255,255,0.05); border: none; }
+    .result-emoji { font-size: 24px; margin-bottom: 8px; }
+    .result-title { font-family: 'Righteous', cursive; font-size: 18px; color: #ff6633; margin-bottom: 8px; }
+    .result-song { font-size: 16px; color: #ffaa33; margin-bottom: 8px; }
+    .result-stats { font-size: 13px; color: #8888aa; }
+    .play-again-btn {
+      margin-top: 12px; background: rgba(255,102,51,0.15); border: 1px solid #ff6633;
+      border-radius: 6px; color: #ff6633; font-size: 14px;
+      font-family: 'Righteous', cursive; padding: 8px 24px; cursor: pointer;
+    }
+
+    /* GUESSES */
+    .guesses-container { flex: 1; overflow-y: auto; }
+    .latest-label, .rankings-label { font-size: 9px; color: #666; margin-bottom: 4px; letter-spacing: 1px; }
+    .latest-guess {
+      margin-bottom: 12px; background: rgba(255,255,255,0.06); border-radius: 8px;
+      padding: 10px 14px; border-left: 3px solid;
+    }
+    .guess-row {
+      margin-bottom: 6px; background: rgba(255,255,255,0.03); border-radius: 8px;
+      padding: 10px 14px; border: 1px solid transparent;
+    }
+    .guess-row.winner { border-color: #ff333380; }
+    .guess-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .guess-text { color: #ddd; font-size: 14px; }
+    .guess-score-area { display: flex; align-items: center; gap: 8px; }
+    .guess-temp { font-size: 10px; }
+    .guess-score {
+      font-size: 14px; font-weight: 700; font-family: 'Righteous', cursive;
+      min-width: 36px; text-align: right;
+    }
+    .score-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
+    .score-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+    .guess-hint { font-size: 11px; color: #777; font-style: italic; margin-top: 4px; }
+    .empty-state { text-align: center; padding: 40px; color: #444; }
+    .empty-emoji { font-size: 32px; margin-bottom: 12px; }
+    .empty-text { font-size: 14px; margin-bottom: 8px; }
+    .empty-sub { font-size: 12px; }
+
+    .loading { opacity: 0.5; pointer-events: none; }
+  </style>
+</head>
+<body>
+
+<!-- TITLE SCREEN -->
+<div id="title-screen">
+  <div class="music-notes">♪ ♫ ♪</div>
+  <div class="game-title">SONG SLEUTH</div>
+  <div class="subtitle">GUESS THE SONG · GET WARMER · FIND THE HIT</div>
+  <div class="description">
+    A secret song is chosen. Type song titles and find out how close you are. Use the clues to zero in on the answer.
+  </div>
+  <div class="era-label">CHOOSE YOUR ERA</div>
+  <button class="era-btn" onclick="startGame('80s_top10')">🎵 80's TOP 10 HITS</button>
+  <div class="locked-grid">
+    <div class="locked-btn">🔒 70's HITS</div>
+    <div class="locked-btn">🔒 90's HITS</div>
+    <div class="locked-btn">🔒 2000's HITS</div>
+    <div class="locked-btn">🔒 ALL DECADES</div>
+  </div>
+  <div class="coming-soon">More eras coming soon...</div>
+  <div class="site-name">BYTESIZEDARCADE.COM</div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="game-screen">
+  <div class="header">
+    <div class="header-title" onclick="showTitle()">SONG SLEUTH</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="header-info" id="header-info">🎵 80's Top 10 · Guesses: 0</span>
+      <button class="header-btn" id="action-btn" onclick="handleAction()">GIVE UP</button>
+    </div>
+  </div>
+
+  <div id="input-area">
+    <div class="input-row">
+      <input type="text" class="guess-input" id="guess-input" placeholder="Type a song title..." onkeydown="if(event.key==='Enter')submitGuess()">
+      <button class="guess-btn" id="guess-btn" onclick="submitGuess()">GUESS</button>
+    </div>
+    <div class="info-row">
+      <span class="db-count" id="db-count"></span>
+      <button class="hint-btn locked" id="hint-btn" onclick="requestHint()">🔒 HINT (need 3 more guesses)</button>
+    </div>
+    <div class="hints-box" id="hints-box" style="display:none"></div>
+  </div>
+
+  <div id="result-area"></div>
+
+  <div class="guesses-container" id="guesses-container">
+    <div class="empty-state" id="empty-state">
+      <div class="empty-emoji">🎵</div>
+      <div class="empty-text">A secret 80s song has been chosen</div>
+      <div class="empty-sub" id="empty-sub"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Game state
+  let sessionId = null;
+  let songCount = 0;
+  let guesses = [];
+  let hintsUsed = 0;
+  let hintMessages = [];
+  let hintOrder = [];
+  let bonusHintOrder = [];
+  let gameWon = false;
+  let revealSecret = false;
+
+  function shuffleArray(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function getScoreColor(score) {
+    if (score <= 5) return "#ff2222";
+    if (score <= 100) return "#ff6633";
+    if (score <= 300) return "#ffaa33";
+    if (score <= 500) return "#ffff33";
+    if (score <= 750) return "#66ffff";
+    return "#4488ff";
+  }
+
+  function getTemperature(score) {
+    if (score <= 5) return "🔥 ON FIRE";
+    if (score <= 100) return "🔥 HOT";
+    if (score <= 300) return "♨️ WARM";
+    if (score <= 500) return "🌤️ LUKEWARM";
+    if (score <= 750) return "❄️ COOL";
+    return "🧊 FREEZING";
+  }
+
+  function getBarWidth(score) {
+    return Math.max(2, ((1000 - score) / 1000) * 100);
+  }
+
+  function showTitle() {
+    document.getElementById('title-screen').style.display = 'flex';
+    document.getElementById('game-screen').style.display = 'none';
+  }
+
+  async function startGame(category) {
+    try {
+      const res = await fetch('/.netlify/functions/start-game', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      sessionId = data.session_id;
+      songCount = data.song_count;
+      guesses = [];
+      hintsUsed = 0;
+      hintMessages = [];
+      hintOrder = shuffleArray([0, 1, 2]);
+      bonusHintOrder = shuffleArray([0, 1]);
+      gameWon = false;
+      revealSecret = false;
+
+      document.getElementById('title-screen').style.display = 'none';
+      document.getElementById('game-screen').style.display = 'flex';
+      document.getElementById('input-area').style.display = 'block';
+      document.getElementById('result-area').innerHTML = '';
+      document.getElementById('db-count').textContent = `${songCount} Billboard Top 10 hits in the database`;
+      document.getElementById('empty-sub').textContent = `${songCount} Billboard Top 10 hits in the database`;
+      document.getElementById('guess-input').value = '';
+      document.getElementById('guess-input').focus();
+      document.getElementById('action-btn').textContent = 'GIVE UP';
+
+      updateHeader();
+      updateHintButton();
+      renderGuesses();
+    } catch (err) {
+      console.error('Start game error:', err);
+      alert('Failed to start game. Please try again.');
+    }
+  }
+
+  async function submitGuess() {
+    const input = document.getElementById('guess-input');
+    const guess = input.value.trim();
+    if (!guess || gameWon || revealSecret) return;
+
+    const btn = document.getElementById('guess-btn');
+    btn.disabled = true;
+    btn.textContent = '...';
+
+    try {
+      const res = await fetch('/.netlify/functions/guess', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, guess }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      guesses.push({ guess, score: data.score, hint: data.hint });
+      input.value = '';
+
+      if (data.solved) {
+        gameWon = true;
+        showWinState(guess);
+      }
+
+      updateHeader();
+      updateHintButton();
+      renderGuesses();
+    } catch (err) {
+      console.error('Guess error:', err);
+      alert('Failed to submit guess. Please try again.');
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'GUESS';
+    input.focus();
+  }
+
+  async function requestHint() {
+    if (hintsUsed >= 5) return;
+    const requiredGuesses = [3, 6, 9, 12, 15];
+    if (guesses.length < requiredGuesses[hintsUsed]) return;
+
+    try {
+      const res = await fetch('/.netlify/functions/hint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: sessionId,
+          hints_used: hintsUsed,
+          hint_order: hintOrder,
+          bonus_hint_order: bonusHintOrder,
+          guesses_count: guesses.length,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      hintsUsed++;
+      hintMessages.push(data.hint);
+      updateHintButton();
+      renderHints();
+    } catch (err) {
+      console.error('Hint error:', err);
+    }
+  }
+
+  async function handleAction() {
+    if (gameWon || revealSecret) {
+      startGame('80s_top10');
+    } else {
+      try {
+        const res = await fetch('/.netlify/functions/give-up', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: sessionId }),
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        revealSecret = true;
+        document.getElementById('input-area').style.display = 'none';
+        document.getElementById('result-area').innerHTML = `
+          <div class="result-box lose" style="margin-top:8px; padding:14px; background:rgba(255,255,255,0.05); border-radius:8px; font-size:14px; color:#888; text-align:center;">
+            The answer was: <span style="color:#ffaa33; font-family:'Righteous',cursive;">${data.title} - ${data.artist}</span>
+            <div style="margin-top:10px;">
+              <button class="play-again-btn" onclick="startGame('80s_top10')">PLAY AGAIN</button>
+            </div>
+          </div>
+        `;
+        document.getElementById('action-btn').textContent = 'NEW GAME';
+      } catch (err) {
+        console.error('Give up error:', err);
+      }
+    }
+  }
+
+  function showWinState(guess) {
+    const lastGuess = guesses[guesses.length - 1];
+    document.getElementById('input-area').style.display = 'none';
+    const penalty = hintsUsed * 5;
+    const total = guesses.length + penalty;
+    const noHints = hintsUsed === 0 ? ' · No hints! 🏆' : '';
+
+    document.getElementById('result-area').innerHTML = `
+      <div class="result-box win">
+        <div class="result-emoji">🎉</div>
+        <div class="result-title">YOU GOT IT!</div>
+        <div class="result-song">${guess}</div>
+        <div class="result-stats">
+          Solved in ${guesses.length}${penalty > 0 ? ` + ${penalty} penalty` : ''} = ${total} guesses${noHints}
+        </div>
+        <button class="play-again-btn" onclick="startGame('80s_top10')">PLAY AGAIN</button>
+      </div>
+    `;
+    document.getElementById('action-btn').textContent = 'NEW GAME';
+  }
+
+  function updateHeader() {
+    const penalty = hintsUsed > 0 ? ` (+${hintsUsed * 5})` : '';
+    document.getElementById('header-info').textContent = `🎵 80's Top 10 · Guesses: ${guesses.length}${penalty}`;
+  }
+
+  function updateHintButton() {
+    const btn = document.getElementById('hint-btn');
+    if (gameWon || revealSecret || hintsUsed >= 5) {
+      btn.style.display = 'none';
+      return;
+    }
+    btn.style.display = 'inline-block';
+    const requiredGuesses = [3, 6, 9, 12, 15];
+    const needed = requiredGuesses[hintsUsed];
+    const available = guesses.length >= needed;
+    const remaining = 5 - hintsUsed;
+
+    if (available) {
+      btn.className = 'hint-btn available';
+      btn.textContent = `💡 HINT (${remaining} left · +5 penalty)`;
+    } else {
+      btn.className = 'hint-btn locked';
+      const diff = needed - guesses.length;
+      btn.textContent = `🔒 HINT (need ${diff} more guess${diff !== 1 ? 'es' : ''})`;
+    }
+  }
+
+  function renderHints() {
+    const box = document.getElementById('hints-box');
+    if (hintMessages.length === 0) {
+      box.style.display = 'none';
+      return;
+    }
+    box.style.display = 'block';
+    box.innerHTML = hintMessages.map(h => `<div class="hint-msg">${h}</div>`).join('');
+  }
+
+  function renderGuesses() {
+    const container = document.getElementById('guesses-container');
+    const empty = document.getElementById('empty-state');
+
+    if (guesses.length === 0 && !gameWon) {
+      empty.style.display = 'block';
+      // Clear any previous guess HTML
+      const existing = container.querySelectorAll('.latest-label, .latest-guess, .rankings-label, .guess-row');
+      existing.forEach(el => el.remove());
+      return;
+    }
+    empty.style.display = 'none';
+
+    const sorted = [...guesses].sort((a, b) => a.score - b.score);
+    let html = '';
+
+    // Latest guess (pinned)
+    if (!gameWon && guesses.length > 0) {
+      const latest = guesses[guesses.length - 1];
+      const color = getScoreColor(latest.score);
+      html += `<div class="latest-label">LATEST GUESS</div>`;
+      html += `<div class="latest-guess" style="border-left-color:${color}">`;
+      html += renderGuessContent(latest, color);
+      html += `</div>`;
+    }
+
+    // Rankings
+    if (guesses.length > 1 && !gameWon) {
+      html += `<div class="rankings-label">RANKINGS</div>`;
+    }
+    sorted.forEach(g => {
+      const color = getScoreColor(g.score);
+      html += `<div class="guess-row${g.score <= 1 ? ' winner' : ''}">`;
+      html += renderGuessContent(g, color);
+      html += `</div>`;
+    });
+
+    // Remove old dynamic content
+    const existing = container.querySelectorAll('.latest-label, .latest-guess, .rankings-label, .guess-row');
+    existing.forEach(el => el.remove());
+
+    // Insert before empty state
+    container.insertAdjacentHTML('afterbegin', html);
+  }
+
+  function renderGuessContent(g, color) {
+    let html = `
+      <div class="guess-header">
+        <span class="guess-text">${escapeHtml(g.guess)}</span>
+        <div class="guess-score-area">
+          <span class="guess-temp" style="color:${color}">${getTemperature(g.score)}</span>
+          <span class="guess-score" style="color:${color}">#${g.score}</span>
+        </div>
+      </div>
+      <div class="score-bar">
+        <div class="score-bar-fill" style="width:${getBarWidth(g.score)}%;background:${color};box-shadow:0 0 8px ${color}40"></div>
+      </div>
+    `;
+    if (g.hint) {
+      html += `<div class="guess-hint">${escapeHtml(g.hint)}</div>`;
+    }
+    return html;
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+</script>
+</body>
+</html>
