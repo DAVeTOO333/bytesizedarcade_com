@@ -26,11 +26,11 @@ function fuzzyMatch(input, target) {
 function scoreSimilarity(secret, guess, allSongs) {
   // Check for exact match
   if (fuzzyMatch(guess, secret.title)) {
-    return { score: 1, hint: "🎯 That's it!", solved: true };
+    return { score: 1, hint: "🎯 That's it!", solved: true, title: secret.title, artist: secret.artist };
   }
   if (fuzzyMatch(guess, `${secret.title} ${secret.artist}`) ||
       fuzzyMatch(guess, `${secret.title} - ${secret.artist}`)) {
-    return { score: 1, hint: "🎯 That's it!", solved: true };
+    return { score: 1, hint: "🎯 That's it!", solved: true, title: secret.title, artist: secret.artist };
   }
 
   // Find the guess in the database
@@ -54,7 +54,7 @@ function scoreSimilarity(secret, guess, allSongs) {
 
   // If it matched the secret through DB lookup
   if (guessEntry && guessEntry.title === secret.title && guessEntry.artist === secret.artist) {
-    return { score: 1, hint: "🎯 That's it!", solved: true };
+    return { score: 1, hint: "🎯 That's it!", solved: true, title: secret.title, artist: secret.artist };
   }
 
   // Score unknown songs
@@ -204,6 +204,8 @@ exports.handler = async (event) => {
         hint: result.hint,
         solved: result.solved,
         guess_number: session.guesses + 1,
+        title: result.title || null,
+        artist: result.artist || null,
       }),
     };
   } catch (err) {
