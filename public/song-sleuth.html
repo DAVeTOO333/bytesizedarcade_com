@@ -320,7 +320,7 @@
 
       if (data.solved) {
         gameWon = true;
-        showWinState(guess);
+        showWinState(data.title || guess, data.artist);
       }
 
       updateHeader();
@@ -395,18 +395,19 @@
     }
   }
 
-  function showWinState(guess) {
-    const lastGuess = guesses[guesses.length - 1];
+  function showWinState(title, artist) {
     document.getElementById('input-area').style.display = 'none';
     const penalty = hintsUsed * 5;
     const total = guesses.length + penalty;
     const noHints = hintsUsed === 0 ? ' · No hints! 🏆' : '';
+    const artistLine = artist ? `<div style="font-size:14px;color:#8888aa;margin-bottom:8px;">${escapeHtml(artist)}</div>` : '';
 
     document.getElementById('result-area').innerHTML = `
       <div class="result-box win">
         <div class="result-emoji">🎉</div>
         <div class="result-title">YOU GOT IT!</div>
-        <div class="result-song">${guess}</div>
+        <div class="result-song">${escapeHtml(title)}</div>
+        ${artistLine}
         <div class="result-stats">
           Solved in ${guesses.length}${penalty > 0 ? ` + ${penalty} penalty` : ''} = ${total} guesses${noHints}
         </div>
