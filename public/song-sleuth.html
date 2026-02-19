@@ -164,6 +164,7 @@
     <div class="locked-btn">🔒 ALL CATEGORIES</div>
   </div>
   <div class="coming-soon">More categories coming soon...</div>
+  <div id="play-counter" style="margin-top:12px;font-size:13px;color:#6666aa;letter-spacing:1px;opacity:0;transition:opacity 0.5s ease;"></div>
   <div class="site-name">BYTESIZEDARCADE.COM</div>
 </div>
 
@@ -255,7 +256,23 @@
   function showTitle() {
     document.getElementById('title-screen').style.display = 'flex';
     document.getElementById('game-screen').style.display = 'none';
+    loadPlayCount();
   }
+
+  async function loadPlayCount() {
+    try {
+      const res = await fetch('/.netlify/functions/stats');
+      const data = await res.json();
+      if (data.total_games) {
+        const el = document.getElementById('play-counter');
+        el.textContent = `🕹️ ${data.total_games.toLocaleString()} games played`;
+        el.style.opacity = '1';
+      }
+    } catch (e) { /* silent fail */ }
+  }
+
+  // Load count on page load
+  loadPlayCount();
 
   async function startGame(category) {
     try {
