@@ -26,7 +26,7 @@ exports.handler = async (event) => {
 
   try {
     const sql = getDb();
-    const { session_id, hints_used, artist_hint_used, title_hint_used, guesses_count } = JSON.parse(event.body || "{}");
+    const { session_id, hints_used, artist_hint_used, title_hint_used, full_artist_used, full_title_used, guesses_count } = JSON.parse(event.body || "{}");
 
     if (!session_id) {
       return { statusCode: 400, body: JSON.stringify({ error: "Missing session_id" }) };
@@ -57,6 +57,8 @@ exports.handler = async (event) => {
     let hint;
     let newArtistHintUsed = artist_hint_used;
     let newTitleHintUsed = title_hint_used;
+    let newFullArtistUsed = full_artist_used;
+    let newFullTitleUsed = full_title_used;
 
     if (hints_used === 0) {
       // Hint 1: always genre, always free
@@ -85,23 +87,19 @@ exports.handler = async (event) => {
       const useArtist = Math.random() < 0.5;
       if (useArtist) {
         hint = `🎤 Artist: ${secret.artist}`;
-        newArtistHintUsed = true;
+        newFullArtistUsed = true;
       } else {
         hint = `📝 Title: ${titleToBlanks(secret.title)}`;
-        newTitleHintUsed = true;
+        newFullTitleUsed = true;
       }
     } else if (hints_used === 4) {
-      // Hint 5: whichever full reveal we didn't get yet
-      // Figure out what hint 4 gave — we track via artist_hint_used / title_hint_used
-      // At this point after hint 4, one of them was newly set. We give the other.
-      // But we need to know what hint 4 gave. We'll use a heuristic:
-      // if after hint 4 newArtistHintUsed is true but newTitleHintUsed is false (from full hints), give title
-      // We pass artist_hint_used and title_hint_used from the client reflecting state AFTER hint 4.
-      // So: give whichever full reveal is still missing.
-      if (!artist_hint_used) {
+      // Hint 5: whichever full reveal hint 4 did NOT give
+      if (!newFullArtistUsed) {
         hint = `🎤 Artist: ${secret.artist}`;
+        newFullArtistUsed = true;
       } else {
         hint = `📝 Title: ${titleToBlanks(secret.title)}`;
+        newFullTitleUsed = true;
       }
     }
 
@@ -117,6 +115,8 @@ exports.handler = async (event) => {
         penalty: HINT_PENALTIES[hints_used],
         artist_hint_used: newArtistHintUsed,
         title_hint_used: newTitleHintUsed,
+        full_artist_used: newFullArtistUsed,
+        full_title_used: newFullTitleUsed,
       }),
     };
   } catch (err) {

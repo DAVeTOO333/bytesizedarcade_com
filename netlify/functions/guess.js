@@ -159,34 +159,26 @@ function scoreSimilarity(secret, guess, allSongs) {
   }
   // Beyond 5 years: no year credit
 
-  // closeness now ranges roughly 0–100
-  // Map to heat levels with generous bands so players see more warm/hot
-  // closeness: 0 = nothing in common, 100 = very close
-  let heat, displayScore;
+  // closeness: 0 = nothing in common, ~100 = very close
+  // barPercent = closeness clamped to 2–100 (higher = hotter = longer bar)
+  let heat;
 
   if (closeness >= 60) {
     heat = "🔥 HOT";
-    displayScore = Math.round(10 + (100 - closeness) * 0.4);
   } else if (closeness >= 40) {
     heat = "♨️ WARM";
-    displayScore = Math.round(30 + (60 - closeness) * 1.5);
   } else if (closeness >= 25) {
     heat = "🌤️ LUKEWARM";
-    displayScore = Math.round(55 + (40 - closeness) * 2);
   } else if (closeness >= 12) {
     heat = "❄️ COOL";
-    displayScore = Math.round(75 + (25 - closeness) * 2);
   } else {
     heat = "🧊 FREEZING";
-    displayScore = Math.round(90 + Math.min(9, (12 - closeness) * 0.8));
   }
 
-  // displayScore is a 0–100 bar fill percentage (inverse: high = close)
-  const barPercent = Math.max(2, 100 - displayScore);
-
+  const barPercent = Math.min(98, Math.max(2, closeness));
   let hint = reasons.length > 0 ? reasons[0] : "Different musical territory";
 
-  return { score: displayScore, barPercent, heat, hint, solved: false };
+  return { barPercent, heat, hint, solved: false };
 }
 
 function scoreUnknownSong(secret, guessText, allSongs) {
@@ -216,27 +208,15 @@ function scoreUnknownSong(secret, guessText, allSongs) {
   if (rockWords.some(w => gl.includes(w)) && secretIsRock) closeness += 5;
   if (popWords.some(w => gl.includes(w)) && secretIsPop) closeness += 5;
 
-  // Map closeness to displayScore/heat same as above
-  let heat, displayScore;
-  if (closeness >= 60) {
-    heat = "🔥 HOT";
-    displayScore = Math.round(10 + (100 - closeness) * 0.4);
-  } else if (closeness >= 40) {
-    heat = "♨️ WARM";
-    displayScore = Math.round(30 + (60 - closeness) * 1.5);
-  } else if (closeness >= 25) {
-    heat = "🌤️ LUKEWARM";
-    displayScore = Math.round(55 + (40 - closeness) * 2);
-  } else if (closeness >= 12) {
-    heat = "❄️ COOL";
-    displayScore = Math.round(75 + (25 - closeness) * 2);
-  } else {
-    heat = "🧊 FREEZING";
-    displayScore = Math.round(90 + Math.min(9, (12 - closeness) * 0.8));
-  }
+  let heat;
+  if (closeness >= 60) heat = "🔥 HOT";
+  else if (closeness >= 40) heat = "♨️ WARM";
+  else if (closeness >= 25) heat = "🌤️ LUKEWARM";
+  else if (closeness >= 12) heat = "❄️ COOL";
+  else heat = "🧊 FREEZING";
 
-  const barPercent = Math.max(2, 100 - displayScore);
-  return { score: displayScore, barPercent, heat, hint, solved: false };
+  const barPercent = Math.min(98, Math.max(2, closeness));
+  return { barPercent, heat, hint, solved: false };
 }
 
 exports.handler = async (event) => {
@@ -299,8 +279,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       body: JSON.stringify({
-        score: result.score,
-        barPercent: result.barPercent !== undefined ? result.barPercent : Math.max(2, 100 - result.score),
+        barPercent: result.barPercent,
         heat: result.heat,
         hint: result.hint,
         solved: result.solved,
