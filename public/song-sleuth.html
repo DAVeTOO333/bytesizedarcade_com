@@ -82,17 +82,35 @@
     .guess-btn:disabled { background: #333; border-color: #444; color: #666; cursor: default; }
     .info-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
     .db-count { font-size: 11px; color: #555; }
+
+    /* HINT BUTTON */
     .hint-btn {
       border-radius: 6px; font-size: 11px; padding: 4px 10px; cursor: pointer; border: 1px solid;
     }
     .hint-btn.available { background: rgba(255,170,51,0.1); border-color: #ffaa3340; color: #ffaa33; }
+    .hint-btn.free { background: rgba(100,220,100,0.1); border-color: #64dc6440; color: #64dc64; }
     .hint-btn.locked { background: rgba(255,255,255,0.03); border-color: #333; color: #555; cursor: default; }
+    .hint-btn.all-used { display: none; }
+
+    /* HINTS BOX */
     .hints-box {
       margin-top: 8px; padding: 10px; background: rgba(255,170,51,0.06);
       border: 1px solid #ffaa3320; border-radius: 8px;
     }
     .hint-msg { font-size: 12px; color: #ffaa33; margin-bottom: 4px; }
     .hint-msg:last-child { margin-bottom: 0; }
+
+    /* HINT TRACKER */
+    .hint-tracker {
+      display: flex; gap: 4px; margin-top: 6px; align-items: center;
+    }
+    .hint-dot {
+      width: 8px; height: 8px; border-radius: 50%; border: 1px solid #555;
+      background: transparent; transition: all 0.3s;
+    }
+    .hint-dot.used { background: #ffaa33; border-color: #ffaa33; }
+    .hint-dot.free { background: #64dc64; border-color: #64dc64; }
+    .hint-penalty-label { font-size: 10px; color: #555; margin-left: 4px; }
 
     /* RESULT BOXES */
     .result-box {
@@ -124,11 +142,9 @@
     .guess-row.winner { border-color: #ff333380; }
     .guess-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
     .guess-text { color: #ddd; font-size: 14px; }
-    .guess-score-area { display: flex; align-items: center; gap: 8px; }
-    .guess-temp { font-size: 10px; }
-    .guess-score {
-      font-size: 14px; font-weight: 700; font-family: 'Righteous', cursive;
-      min-width: 36px; text-align: right;
+    .guess-heat {
+      font-size: 12px; font-family: 'Righteous', cursive; font-weight: 700;
+      white-space: nowrap; margin-left: 8px;
     }
     .score-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
     .score-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
@@ -137,8 +153,6 @@
     .empty-emoji { font-size: 32px; margin-bottom: 12px; }
     .empty-text { font-size: 14px; margin-bottom: 8px; }
     .empty-sub { font-size: 12px; }
-
-    .loading { opacity: 0.5; pointer-events: none; }
   </style>
 </head>
 <body>
@@ -185,7 +199,7 @@
     </div>
     <div class="info-row">
       <span class="db-count" id="db-count"></span>
-      <button class="hint-btn locked" id="hint-btn" onclick="requestHint()">🔒 HINT (need 3 more guesses)</button>
+      <button class="hint-btn locked" id="hint-btn" onclick="requestHint()">💡 HINT (guess first)</button>
     </div>
     <div class="hints-box" id="hints-box" style="display:none"></div>
   </div>
@@ -208,11 +222,15 @@
   let guesses = [];
   let hintsUsed = 0;
   let hintMessages = [];
-  let hintOrder = [];
-  let bonusHintOrder = [];
+  let hintPenaltyTotal = 0;
+  let artistHintUsed = false;  // tracks if we've given first-letter-of-artist or full artist
+  let titleHintUsed = false;   // tracks if we've given first-letter-of-title or full title
   let gameWon = false;
   let revealSecret = false;
   let currentCategory = '80s_top10';
+
+  // Penalty per hint index: [0, 2, 3, 4, 5]
+  const HINT_PENALTIES = [0, 2, 3, 4, 5];
 
   const categoryLabels = {
     '80s_top10': "🎵 80's Top 10",
@@ -222,35 +240,14 @@
     'vocaloid': "🎧 Vocaloid",
   };
 
-  function shuffleArray(arr) {
-    const a = [...arr];
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-  }
-
-  function getScoreColor(score) {
-    if (score <= 5) return "#ff2222";
-    if (score <= 100) return "#ff6633";
-    if (score <= 300) return "#ffaa33";
-    if (score <= 500) return "#ffff33";
-    if (score <= 750) return "#66ffff";
-    return "#4488ff";
-  }
-
-  function getTemperature(score) {
-    if (score <= 5) return "🔥 ON FIRE";
-    if (score <= 100) return "🔥 HOT";
-    if (score <= 300) return "♨️ WARM";
-    if (score <= 500) return "🌤️ LUKEWARM";
-    if (score <= 750) return "❄️ COOL";
-    return "🧊 FREEZING";
-  }
-
-  function getBarWidth(score) {
-    return Math.max(2, ((1000 - score) / 1000) * 100);
+  function getHeatColor(heat) {
+    if (!heat) return "#4488ff";
+    if (heat.includes("ON FIRE")) return "#ff2222";
+    if (heat.includes("HOT")) return "#ff6633";
+    if (heat.includes("WARM")) return "#ffaa33";
+    if (heat.includes("LUKEWARM")) return "#ffff33";
+    if (heat.includes("COOL")) return "#66ffff";
+    return "#4488ff"; // FREEZING
   }
 
   function showTitle() {
@@ -271,7 +268,6 @@
     } catch (e) { /* silent fail */ }
   }
 
-  // Load count on page load
   loadPlayCount();
 
   async function startGame(category) {
@@ -290,8 +286,9 @@
       guesses = [];
       hintsUsed = 0;
       hintMessages = [];
-      hintOrder = shuffleArray([0, 1, 2]);
-      bonusHintOrder = shuffleArray([0, 1]);
+      hintPenaltyTotal = 0;
+      artistHintUsed = false;
+      titleHintUsed = false;
       gameWon = false;
       revealSecret = false;
 
@@ -334,7 +331,13 @@
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
-      guesses.push({ guess, score: data.score, hint: data.hint });
+      guesses.push({
+        guess,
+        score: data.score,
+        barPercent: data.barPercent !== undefined ? data.barPercent : Math.max(2, 100 - data.score),
+        heat: data.heat,
+        hint: data.hint,
+      });
       input.value = '';
 
       if (data.solved) {
@@ -356,9 +359,11 @@
   }
 
   async function requestHint() {
-    if (hintsUsed >= 5) return;
-    const requiredGuesses = [3, 6, 9, 12, 15];
-    if (guesses.length < requiredGuesses[hintsUsed]) return;
+    if (hintsUsed >= 5 || gameWon || revealSecret) return;
+
+    // Hint 0 unlocks after 1 guess, hint N unlocks after N+1 guesses
+    const required = hintsUsed + 1;
+    if (guesses.length < required) return;
 
     try {
       const res = await fetch('/.netlify/functions/hint', {
@@ -367,17 +372,24 @@
         body: JSON.stringify({
           session_id: sessionId,
           hints_used: hintsUsed,
-          hint_order: hintOrder,
-          bonus_hint_order: bonusHintOrder,
+          artist_hint_used: artistHintUsed,
+          title_hint_used: titleHintUsed,
           guesses_count: guesses.length,
         }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
+      hintPenaltyTotal += data.penalty;
       hintsUsed++;
       hintMessages.push(data.hint);
+
+      // Update our tracking state from server response
+      if (data.artist_hint_used !== undefined) artistHintUsed = data.artist_hint_used;
+      if (data.title_hint_used !== undefined) titleHintUsed = data.title_hint_used;
+
       updateHintButton();
+      updateHeader();
       renderHints();
     } catch (err) {
       console.error('Hint error:', err);
@@ -400,8 +412,8 @@
         revealSecret = true;
         document.getElementById('input-area').style.display = 'none';
         document.getElementById('result-area').innerHTML = `
-          <div class="result-box lose" style="margin-top:8px; padding:14px; background:rgba(255,255,255,0.05); border-radius:8px; font-size:14px; color:#888; text-align:center;">
-            The answer was: <span style="color:#ffaa33; font-family:'Righteous',cursive;">${data.title} - ${data.artist}</span>
+          <div style="margin-top:8px; padding:14px; background:rgba(255,255,255,0.05); border-radius:8px; font-size:14px; color:#888; text-align:center;">
+            The answer was: <span style="color:#ffaa33; font-family:'Righteous',cursive;">${escapeHtml(data.title)} - ${escapeHtml(data.artist)}</span>
             <div style="margin-top:10px;">
               <button class="play-again-btn" onclick="startGame(currentCategory)">PLAY AGAIN</button>
             </div>
@@ -416,8 +428,9 @@
 
   function showWinState(title, artist) {
     document.getElementById('input-area').style.display = 'none';
-    const penalty = hintsUsed * 5;
-    const total = guesses.length + penalty;
+    const guessCount = guesses.length;
+    const penaltyStr = hintPenaltyTotal > 0 ? ` + ${hintPenaltyTotal} hint penalty` : '';
+    const total = guessCount + hintPenaltyTotal;
     const noHints = hintsUsed === 0 ? ' · No hints! 🏆' : '';
     const artistLine = artist ? `<div style="font-size:14px;color:#8888aa;margin-bottom:8px;">${escapeHtml(artist)}</div>` : '';
 
@@ -428,7 +441,7 @@
         <div class="result-song">${escapeHtml(title)}</div>
         ${artistLine}
         <div class="result-stats">
-          Solved in ${guesses.length}${penalty > 0 ? ` + ${penalty} penalty` : ''} = ${total} guesses${noHints}
+          ${guessCount} guess${guessCount !== 1 ? 'es' : ''}${penaltyStr} = ${total} total${noHints}
         </div>
         <button class="play-again-btn" onclick="startGame(currentCategory)">PLAY AGAIN</button>
       </div>
@@ -437,30 +450,36 @@
   }
 
   function updateHeader() {
-    const penalty = hintsUsed > 0 ? ` (+${hintsUsed * 5})` : '';
+    const penaltyStr = hintPenaltyTotal > 0 ? ` (+${hintPenaltyTotal} hints)` : '';
     const label = categoryLabels[currentCategory] || currentCategory;
-    document.getElementById('header-info').textContent = `${label} · Guesses: ${guesses.length}${penalty}`;
+    document.getElementById('header-info').textContent = `${label} · Guesses: ${guesses.length}${penaltyStr}`;
   }
 
   function updateHintButton() {
     const btn = document.getElementById('hint-btn');
     if (gameWon || revealSecret || hintsUsed >= 5) {
-      btn.style.display = 'none';
+      btn.className = 'hint-btn all-used';
       return;
     }
-    btn.style.display = 'inline-block';
-    const requiredGuesses = [3, 6, 9, 12, 15];
-    const needed = requiredGuesses[hintsUsed];
-    const available = guesses.length >= needed;
+
+    const required = hintsUsed + 1; // need this many guesses to unlock next hint
+    const available = guesses.length >= required;
+    const penalty = HINT_PENALTIES[hintsUsed];
+    const isFree = penalty === 0;
     const remaining = 5 - hintsUsed;
 
     if (available) {
-      btn.className = 'hint-btn available';
-      btn.textContent = `💡 HINT (${remaining} left · +5 penalty)`;
+      if (isFree) {
+        btn.className = 'hint-btn free';
+        btn.textContent = `💡 HINT (FREE · ${remaining} left)`;
+      } else {
+        btn.className = 'hint-btn available';
+        btn.textContent = `💡 HINT (+${penalty} penalty · ${remaining} left)`;
+      }
     } else {
       btn.className = 'hint-btn locked';
-      const diff = needed - guesses.length;
-      btn.textContent = `🔒 HINT (need ${diff} more guess${diff !== 1 ? 'es' : ''})`;
+      const diff = required - guesses.length;
+      btn.textContent = `🔒 HINT (${diff} more guess${diff !== 1 ? 'es' : ''} to unlock)`;
     }
   }
 
@@ -471,7 +490,7 @@
       return;
     }
     box.style.display = 'block';
-    box.innerHTML = hintMessages.map(h => `<div class="hint-msg">${h}</div>`).join('');
+    box.innerHTML = hintMessages.map(h => `<div class="hint-msg">${escapeHtml(h)}</div>`).join('');
   }
 
   function renderGuesses() {
@@ -480,7 +499,6 @@
 
     if (guesses.length === 0 && !gameWon) {
       empty.style.display = 'block';
-      // Clear any previous guess HTML
       const existing = container.querySelectorAll('.latest-label, .latest-guess, .rankings-label, .guess-row');
       existing.forEach(el => el.remove());
       return;
@@ -490,10 +508,10 @@
     const sorted = [...guesses].sort((a, b) => a.score - b.score);
     let html = '';
 
-    // Latest guess (pinned)
+    // Latest guess (pinned at top)
     if (!gameWon && guesses.length > 0) {
       const latest = guesses[guesses.length - 1];
-      const color = getScoreColor(latest.score);
+      const color = getHeatColor(latest.heat);
       html += `<div class="latest-label">LATEST GUESS</div>`;
       html += `<div class="latest-guess" style="border-left-color:${color}">`;
       html += renderGuessContent(latest, color);
@@ -505,40 +523,38 @@
       html += `<div class="rankings-label">RANKINGS</div>`;
     }
     sorted.forEach(g => {
-      const color = getScoreColor(g.score);
-      html += `<div class="guess-row${g.score <= 1 ? ' winner' : ''}">`;
+      const color = getHeatColor(g.heat);
+      const isWinner = g.score === 0 || (g.heat && g.heat.includes('ON FIRE') && gameWon);
+      html += `<div class="guess-row${isWinner ? ' winner' : ''}">`;
       html += renderGuessContent(g, color);
       html += `</div>`;
     });
 
-    // Remove old dynamic content
+    // Remove old dynamic content and re-insert
     const existing = container.querySelectorAll('.latest-label, .latest-guess, .rankings-label, .guess-row');
     existing.forEach(el => el.remove());
-
-    // Insert before empty state
     container.insertAdjacentHTML('afterbegin', html);
   }
 
   function renderGuessContent(g, color) {
+    const barWidth = g.barPercent !== undefined ? g.barPercent : Math.max(2, 100 - g.score);
     let html = `
       <div class="guess-header">
         <span class="guess-text">${escapeHtml(g.guess)}</span>
-        <div class="guess-score-area">
-          <span class="guess-temp" style="color:${color}">${getTemperature(g.score)}</span>
-          <span class="guess-score" style="color:${color}">#${g.score}</span>
-        </div>
+        <span class="guess-heat" style="color:${color}">${g.heat || '🧊 FREEZING'}</span>
       </div>
       <div class="score-bar">
-        <div class="score-bar-fill" style="width:${getBarWidth(g.score)}%;background:${color};box-shadow:0 0 8px ${color}40"></div>
+        <div class="score-bar-fill" style="width:${barWidth}%;background:${color};box-shadow:0 0 8px ${color}40"></div>
       </div>
     `;
-    if (g.hint) {
+    if (g.hint && !g.hint.includes("That's it")) {
       html += `<div class="guess-hint">${escapeHtml(g.hint)}</div>`;
     }
     return html;
   }
 
   function escapeHtml(str) {
+    if (!str) return '';
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
