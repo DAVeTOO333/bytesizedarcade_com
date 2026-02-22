@@ -61,8 +61,10 @@ exports.handler = async (event) => {
     let newFullTitleUsed = full_title_used;
 
     if (hints_used === 0) {
-      // Hint 1: always genre, always free
-      hint = `🎵 Genre: ${secret.tags[0]}`;
+      // Hint 1: genre — pick most representative tag, skip generic/decade tags
+      const genericTags = new Set(['1980s','1981s','1982s','1983s','1984s','1985s','1986s','1987s','1988s','1989s','1990s','1991s','1992s','1993s','1994s','1995s','1996s','1997s','1998s','1999s','2000s','pop','alternative','cover','tribute','movie soundtrack','instrumental','novelty','experimental','duet','remix','party','fun','catchy','dance','romantic','anthem']);
+      const bestTag = secret.tags.find(t => !genericTags.has(t)) || secret.tags[0];
+      hint = `🎵 Genre: ${bestTag}`;
     } else if (hints_used === 1) {
       // Hint 2: random — first letter of artist OR first letter of song title
       const useArtist = Math.random() < 0.5;
