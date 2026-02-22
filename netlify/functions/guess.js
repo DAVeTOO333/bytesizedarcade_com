@@ -67,11 +67,11 @@ function countGenreFamilyOverlap(tagsA, tagsB) {
 function scoreSimilarity(secret, guess, allSongs) {
   // Check for exact match
   if (fuzzyMatch(guess, secret.title)) {
-    return { score: 0, heat: "🔥 ON FIRE", hint: "🎯 That's it!", solved: true, title: secret.title, artist: secret.artist };
+    return { barPercent: 100, heat: "🔥 ON FIRE", hint: "🎯 That's it!", solved: true, title: secret.title, artist: secret.artist };
   }
   if (fuzzyMatch(guess, `${secret.title} ${secret.artist}`) ||
       fuzzyMatch(guess, `${secret.title} - ${secret.artist}`)) {
-    return { score: 0, heat: "🔥 ON FIRE", hint: "🎯 That's it!", solved: true, title: secret.title, artist: secret.artist };
+    return { barPercent: 100, heat: "🔥 ON FIRE", hint: "🎯 That's it!", solved: true, title: secret.title, artist: secret.artist };
   }
 
   // Find the guess in the database
@@ -95,7 +95,7 @@ function scoreSimilarity(secret, guess, allSongs) {
 
   // If it matched the secret through DB lookup
   if (guessEntry && guessEntry.title === secret.title && guessEntry.artist === secret.artist) {
-    return { score: 0, heat: "🔥 ON FIRE", hint: "🎯 That's it!", solved: true, title: secret.title, artist: secret.artist };
+    return { barPercent: 100, heat: "🔥 ON FIRE", hint: "🎯 That's it!", solved: true, title: secret.title, artist: secret.artist };
   }
 
   // Score unknown songs
