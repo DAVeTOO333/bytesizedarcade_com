@@ -223,8 +223,10 @@
   let hintsUsed = 0;
   let hintMessages = [];
   let hintPenaltyTotal = 0;
-  let artistHintUsed = false;  // tracks if we've given first-letter-of-artist or full artist
-  let titleHintUsed = false;   // tracks if we've given first-letter-of-title or full title
+  let artistHintUsed = false;  // first-letter-of-artist given
+  let titleHintUsed = false;   // first-letter-of-title given
+  let fullArtistUsed = false;  // full artist name given (hint 4/5)
+  let fullTitleUsed = false;   // full title blanks given (hint 4/5)
   let gameWon = false;
   let revealSecret = false;
   let currentCategory = '80s_top10';
@@ -289,6 +291,8 @@
       hintPenaltyTotal = 0;
       artistHintUsed = false;
       titleHintUsed = false;
+      fullArtistUsed = false;
+      fullTitleUsed = false;
       gameWon = false;
       revealSecret = false;
 
@@ -333,8 +337,7 @@
 
       guesses.push({
         guess,
-        score: data.score,
-        barPercent: data.barPercent !== undefined ? data.barPercent : Math.max(2, 100 - data.score),
+        barPercent: data.barPercent !== undefined ? data.barPercent : 2,
         heat: data.heat,
         hint: data.hint,
       });
@@ -374,6 +377,8 @@
           hints_used: hintsUsed,
           artist_hint_used: artistHintUsed,
           title_hint_used: titleHintUsed,
+          full_artist_used: fullArtistUsed,
+          full_title_used: fullTitleUsed,
           guesses_count: guesses.length,
         }),
       });
@@ -387,6 +392,8 @@
       // Update our tracking state from server response
       if (data.artist_hint_used !== undefined) artistHintUsed = data.artist_hint_used;
       if (data.title_hint_used !== undefined) titleHintUsed = data.title_hint_used;
+      if (data.full_artist_used !== undefined) fullArtistUsed = data.full_artist_used;
+      if (data.full_title_used !== undefined) fullTitleUsed = data.full_title_used;
 
       updateHintButton();
       updateHeader();
@@ -505,7 +512,7 @@
     }
     empty.style.display = 'none';
 
-    const sorted = [...guesses].sort((a, b) => a.score - b.score);
+    const sorted = [...guesses].sort((a, b) => b.barPercent - a.barPercent);
     let html = '';
 
     // Latest guess (pinned at top)
@@ -537,7 +544,7 @@
   }
 
   function renderGuessContent(g, color) {
-    const barWidth = g.barPercent !== undefined ? g.barPercent : Math.max(2, 100 - g.score);
+    const barWidth = g.barPercent !== undefined ? g.barPercent : 2;
     let html = `
       <div class="guess-header">
         <span class="guess-text">${escapeHtml(g.guess)}</span>
