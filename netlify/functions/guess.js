@@ -23,14 +23,55 @@ function fuzzyMatch(input, target) {
   return false;
 }
 
+// Genre family groupings — songs within the same family get partial credit
+const GENRE_FAMILIES = [
+  ['pop', 'dance pop', 'teen pop', 'synth pop', 'dance'],
+  ['rock', 'pop rock', 'arena rock', 'heartland rock', 'hard rock', 'hair metal', 'southern rock', 'blues rock'],
+  ['new wave', 'synth pop', 'synth rock', 'alternative'],
+  ['R&B', 'soul', 'funk', 'disco', 'smooth jazz', 'jazz', 'groove'],
+  ['country', 'country pop', 'country rock', 'soft rock', 'yacht rock'],
+  ['hip hop', 'rap', 'new jack swing'],
+  ['reggae', 'ska', 'reggae pop'],
+  ['metal', 'heavy metal', 'thrash', 'hair metal', 'hard rock'],
+  ['punk', 'post-punk', 'new wave', 'alternative'],
+  ['progressive rock', 'art rock', 'synth rock'],
+  ['power ballad', 'ballad', 'soft rock', 'romantic'],
+];
+
+function getGenreFamily(tag) {
+  for (const family of GENRE_FAMILIES) {
+    if (family.includes(tag)) return family;
+  }
+  return null;
+}
+
+function countGenreFamilyOverlap(tagsA, tagsB) {
+  // Count how many genre families are shared
+  const familiesA = new Set();
+  const familiesB = new Set();
+  for (const t of tagsA) {
+    const f = getGenreFamily(t);
+    if (f) familiesA.add(f);
+  }
+  for (const t of tagsB) {
+    const f = getGenreFamily(t);
+    if (f) familiesB.add(f);
+  }
+  let overlap = 0;
+  for (const f of familiesA) {
+    if (familiesB.has(f)) overlap++;
+  }
+  return overlap;
+}
+
 function scoreSimilarity(secret, guess, allSongs) {
   // Check for exact match
   if (fuzzyMatch(guess, secret.title)) {
-    return { score: 1, hint: "🎯 That's it!", solved: true, title: secret.title, artist: secret.artist };
+    return { score: 0, heat: "🔥 ON FIRE", hint: "🎯 That's it!", solved: true, title: secret.title, artist: secret.artist };
   }
   if (fuzzyMatch(guess, `${secret.title} ${secret.artist}`) ||
       fuzzyMatch(guess, `${secret.title} - ${secret.artist}`)) {
-    return { score: 1, hint: "🎯 That's it!", solved: true, title: secret.title, artist: secret.artist };
+    return { score: 0, heat: "🔥 ON FIRE", hint: "🎯 That's it!", solved: true, title: secret.title, artist: secret.artist };
   }
 
   // Find the guess in the database
@@ -54,7 +95,7 @@ function scoreSimilarity(secret, guess, allSongs) {
 
   // If it matched the secret through DB lookup
   if (guessEntry && guessEntry.title === secret.title && guessEntry.artist === secret.artist) {
-    return { score: 1, hint: "🎯 That's it!", solved: true, title: secret.title, artist: secret.artist };
+    return { score: 0, heat: "🔥 ON FIRE", hint: "🎯 That's it!", solved: true, title: secret.title, artist: secret.artist };
   }
 
   // Score unknown songs
@@ -62,67 +103,107 @@ function scoreSimilarity(secret, guess, allSongs) {
     return scoreUnknownSong(secret, guess, allSongs);
   }
 
-  // Calculate similarity
-  let score = 0;
+  // Calculate similarity score (lower = closer = hotter)
+  // We'll build a "closeness" score from 0–100, then map to heat
+  let closeness = 0;
   let reasons = [];
 
+  // Same artist: massive boost
   if (guessEntry.artist === secret.artist) {
-    score += 350;
+    closeness += 50;
     reasons.push(`Same artist: ${secret.artist}`);
   }
 
   const secretTags = secret.tags || [];
   const guessTags = guessEntry.tags || [];
+
+  // Exact tag matches
   const sharedTags = guessTags.filter(t => secretTags.includes(t));
-  score += sharedTags.length * 65;
+  closeness += sharedTags.length * 8;
   if (sharedTags.length >= 3) reasons.push("Very similar style");
   else if (sharedTags.length >= 2) reasons.push("Some stylistic overlap");
   else if (sharedTags.length === 1) reasons.push(`Both have a "${sharedTags[0]}" vibe`);
 
-  if (guessEntry.mood === secret.mood) {
-    score += 80;
-    reasons.push("Similar mood");
-  }
-  if (guessEntry.tempo === secret.tempo) {
-    score += 40;
+  // Genre family overlap (partial genre credit)
+  const familyOverlap = countGenreFamilyOverlap(secretTags, guessTags);
+  closeness += familyOverlap * 5;
+  if (familyOverlap > 0 && sharedTags.length === 0) {
+    reasons.push("Related musical style");
   }
 
+  // Mood match
+  if (guessEntry.mood === secret.mood) {
+    closeness += 8;
+    if (!reasons.length) reasons.push("Similar mood");
+  }
+
+  // Tempo match
+  if (guessEntry.tempo === secret.tempo) {
+    closeness += 4;
+  }
+
+  // Year proximity — much more generous bands
   const yearDiff = Math.abs(guessEntry.year - secret.year);
   if (yearDiff === 0) {
-    score += 70;
+    closeness += 15;
     reasons.push("Same year");
   } else if (yearDiff <= 1) {
-    score += 55;
+    closeness += 12;
     reasons.push("Released around the same time");
+  } else if (yearDiff <= 2) {
+    closeness += 9;
   } else if (yearDiff <= 3) {
-    score += 35;
+    closeness += 6;
+  } else if (yearDiff <= 5) {
+    closeness += 3;
+  }
+  // Beyond 5 years: no year credit
+
+  // closeness now ranges roughly 0–100
+  // Map to heat levels with generous bands so players see more warm/hot
+  // closeness: 0 = nothing in common, 100 = very close
+  let heat, displayScore;
+
+  if (closeness >= 60) {
+    heat = "🔥 HOT";
+    displayScore = Math.round(10 + (100 - closeness) * 0.4);
+  } else if (closeness >= 40) {
+    heat = "♨️ WARM";
+    displayScore = Math.round(30 + (60 - closeness) * 1.5);
+  } else if (closeness >= 25) {
+    heat = "🌤️ LUKEWARM";
+    displayScore = Math.round(55 + (40 - closeness) * 2);
+  } else if (closeness >= 12) {
+    heat = "❄️ COOL";
+    displayScore = Math.round(75 + (25 - closeness) * 2);
   } else {
-    score += Math.max(0, 20 - yearDiff * 3);
+    heat = "🧊 FREEZING";
+    displayScore = Math.round(90 + Math.min(9, (12 - closeness) * 0.8));
   }
 
-  score = Math.min(980, Math.max(15, score));
-  score = Math.max(2, 1000 - score);
+  // displayScore is a 0–100 bar fill percentage (inverse: high = close)
+  const barPercent = Math.max(2, 100 - displayScore);
 
   let hint = reasons.length > 0 ? reasons[0] : "Different musical territory";
-  if (score > 900) hint = "Way off — different world entirely";
-  else if (score > 800) hint = reasons[0] || "Not much in common";
 
-  return { score, hint, solved: false };
+  return { score: displayScore, barPercent, heat, hint, solved: false };
 }
 
 function scoreUnknownSong(secret, guessText, allSongs) {
   const gl = guessText.toLowerCase();
-  let score = 50;
+  let closeness = 0;
   let hint = "Not in the database — shooting in the dark!";
 
+  // Check if they typed an artist name
   const artistMatch = allSongs.find(s => gl.includes(s.artist.toLowerCase()));
   if (artistMatch) {
     if (artistMatch.artist === secret.artist) {
-      score = 500 + Math.floor(Math.random() * 200);
+      closeness = 45 + Math.floor(Math.random() * 10);
       hint = "Right artist! But wrong song";
     } else {
       const sharedTags = (artistMatch.tags || []).filter(t => (secret.tags || []).includes(t));
-      score = 80 + sharedTags.length * 40;
+      const familyOverlap = countGenreFamilyOverlap(artistMatch.tags || [], secret.tags || []);
+      closeness = 8 + sharedTags.length * 6 + familyOverlap * 4;
       hint = sharedTags.length > 0 ? "Some genre overlap" : "Different musical world";
     }
   }
@@ -132,12 +213,30 @@ function scoreUnknownSong(secret, guessText, allSongs) {
   const secretIsRock = (secret.tags || []).some(t => t.includes("rock") || t.includes("metal"));
   const secretIsPop = (secret.tags || []).some(t => t.includes("pop"));
 
-  if (rockWords.some(w => gl.includes(w)) && secretIsRock) score += 50;
-  if (popWords.some(w => gl.includes(w)) && secretIsPop) score += 50;
+  if (rockWords.some(w => gl.includes(w)) && secretIsRock) closeness += 5;
+  if (popWords.some(w => gl.includes(w)) && secretIsPop) closeness += 5;
 
-  score = Math.min(800, Math.max(20, score));
-  score = Math.max(2, 1000 - score);
-  return { score, hint, solved: false };
+  // Map closeness to displayScore/heat same as above
+  let heat, displayScore;
+  if (closeness >= 60) {
+    heat = "🔥 HOT";
+    displayScore = Math.round(10 + (100 - closeness) * 0.4);
+  } else if (closeness >= 40) {
+    heat = "♨️ WARM";
+    displayScore = Math.round(30 + (60 - closeness) * 1.5);
+  } else if (closeness >= 25) {
+    heat = "🌤️ LUKEWARM";
+    displayScore = Math.round(55 + (40 - closeness) * 2);
+  } else if (closeness >= 12) {
+    heat = "❄️ COOL";
+    displayScore = Math.round(75 + (25 - closeness) * 2);
+  } else {
+    heat = "🧊 FREEZING";
+    displayScore = Math.round(90 + Math.min(9, (12 - closeness) * 0.8));
+  }
+
+  const barPercent = Math.max(2, 100 - displayScore);
+  return { score: displayScore, barPercent, heat, hint, solved: false };
 }
 
 exports.handler = async (event) => {
@@ -201,6 +300,8 @@ exports.handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify({
         score: result.score,
+        barPercent: result.barPercent !== undefined ? result.barPercent : Math.max(2, 100 - result.score),
+        heat: result.heat,
         hint: result.hint,
         solved: result.solved,
         guess_number: session.guesses + 1,
