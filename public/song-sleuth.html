@@ -340,6 +340,7 @@
         barPercent: data.barPercent !== undefined ? data.barPercent : 2,
         heat: data.heat,
         hint: data.hint,
+        solved: data.solved,
       });
       input.value = '';
 
@@ -548,7 +549,7 @@
     let html = `
       <div class="guess-header">
         <span class="guess-text">${escapeHtml(g.guess)}</span>
-        <span class="guess-heat" style="color:${color}">${g.heat || '🧊 FREEZING'}</span>
+        <span class="guess-heat" style="color:${color}">${g.solved ? '🎯 That's it!' : (g.heat || '🧊 FREEZING')}</span>
       </div>
       <div class="score-bar">
         <div class="score-bar-fill" style="width:${barWidth}%;background:${color};box-shadow:0 0 8px ${color}40"></div>
