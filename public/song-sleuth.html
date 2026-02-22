@@ -545,11 +545,12 @@
   }
 
   function renderGuessContent(g, color) {
+    const heatLabel = g.solved ? '🎯 Got it!' : (g.heat || '🧊 FREEZING');
     const barWidth = g.barPercent !== undefined ? g.barPercent : 2;
     let html = `
       <div class="guess-header">
         <span class="guess-text">${escapeHtml(g.guess)}</span>
-        <span class="guess-heat" style="color:${color}">${g.solved ? '🎯 That's it!' : (g.heat || '🧊 FREEZING')}</span>
+        <span class="guess-heat" style="color:${color}">${heatLabel}</span>
       </div>
       <div class="score-bar">
         <div class="score-bar-fill" style="width:${barWidth}%;background:${color};box-shadow:0 0 8px ${color}40"></div>
