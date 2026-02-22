@@ -274,6 +274,27 @@
 
   async function startGame(category) {
     try {
+      sessionId = null;
+      guesses = [];
+      hintsUsed = 0;
+      hintMessages = [];
+      hintPenaltyTotal = 0;
+      artistHintUsed = false;
+      titleHintUsed = false;
+      fullArtistUsed = false;
+      fullTitleUsed = false;
+      gameWon = false;
+      revealSecret = false;
+      currentCategory = category;
+
+      // Clear UI immediately before waiting for server
+      document.getElementById('header-info').textContent = `${categoryLabels[category] || category} · Guesses: 0`;
+      document.getElementById('hints-box').style.display = 'none';
+      document.getElementById('hints-box').innerHTML = '';
+      document.getElementById('result-area').innerHTML = '';
+      document.getElementById('action-btn').textContent = 'GIVE UP';
+      updateHintButton();
+
       const res = await fetch('/.netlify/functions/start-game', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -285,28 +306,14 @@
       sessionId = data.session_id;
       songCount = data.song_count;
       currentCategory = category;
-      guesses = [];
-      hintsUsed = 0;
-      hintMessages = [];
-      hintPenaltyTotal = 0;
-      artistHintUsed = false;
-      titleHintUsed = false;
-      fullArtistUsed = false;
-      fullTitleUsed = false;
-      gameWon = false;
-      revealSecret = false;
 
       document.getElementById('title-screen').style.display = 'none';
       document.getElementById('game-screen').style.display = 'flex';
       document.getElementById('input-area').style.display = 'block';
-      document.getElementById('result-area').innerHTML = '';
       document.getElementById('db-count').textContent = `${songCount} songs in the database`;
       document.getElementById('empty-sub').textContent = `${songCount} songs in the database`;
       document.getElementById('guess-input').value = '';
       document.getElementById('guess-input').focus();
-      document.getElementById('action-btn').textContent = 'GIVE UP';
-      document.getElementById('hints-box').style.display = 'none';
-      document.getElementById('hints-box').innerHTML = '';
 
       updateHeader();
       updateHintButton();
