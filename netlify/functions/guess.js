@@ -13,13 +13,33 @@ function normalize(str) {
 function fuzzyMatch(input, target) {
   const a = normalize(input);
   const b = normalize(target);
+
+  // Exact match
   if (a === b) return true;
-  if (a.length >= 4 && (a.includes(b) || b.includes(a))) return true;
-  const stripped = (s) => s.replace(/\b(the|a|an|of|in|on|my|your|i|we|is|it|to|and|or)\b/g, "").replace(/\s+/g, " ").trim();
-  if (stripped(a).length >= 4 && stripped(b).length >= 4) {
-    if (stripped(a) === stripped(b)) return true;
-    if (stripped(a).includes(stripped(b)) || stripped(b).includes(stripped(a))) return true;
-  }
+
+  // Strip common articles/filler words for comparison
+  const strip = (s) => s.replace(/\b(the|a|an|of|in|on|my|your|i|we|is|it|to|and|or)\b/g, "").replace(/\s+/g, " ").trim();
+  const sa = strip(a);
+  const sb = strip(b);
+
+  // Stripped exact match (e.g. "The Chain" vs "Chain")
+  if (sa.length >= 3 && sb.length >= 3 && sa === sb) return true;
+
+  // Substring match ONLY if the shorter string is at least 60% the length of the longer
+  // This prevents "Kiss" matching "Kiss on My List"
+  const shorter = a.length <= b.length ? a : b;
+  const longer  = a.length <= b.length ? b : a;
+  const lengthRatio = shorter.length / longer.length;
+
+  if (lengthRatio >= 0.6 && longer.includes(shorter)) return true;
+
+  // Same for stripped versions
+  const sShorter = sa.length <= sb.length ? sa : sb;
+  const sLonger  = sa.length <= sb.length ? sb : sa;
+  const sRatio = sShorter.length > 0 ? sShorter.length / sLonger.length : 0;
+
+  if (sRatio >= 0.6 && sLonger.includes(sShorter)) return true;
+
   return false;
 }
 
@@ -46,7 +66,6 @@ function getGenreFamily(tag) {
 }
 
 function countGenreFamilyOverlap(tagsA, tagsB) {
-  // Count how many genre families are shared
   const familiesA = new Set();
   const familiesB = new Set();
   for (const t of tagsA) {
@@ -65,13 +84,14 @@ function countGenreFamilyOverlap(tagsA, tagsB) {
 }
 
 function scoreSimilarity(secret, guess, allSongs) {
-  // Check for exact match
+  // Check for exact match on title alone
   if (fuzzyMatch(guess, secret.title)) {
-    return { barPercent: 100, heat: "🔥 ON FIRE", hint: "🎯 That's it!", solved: true, title: secret.title, artist: secret.artist };
+    return { barPercent: 100, heat: "🔥 ON FIRE", hint: "🎯 Got it!", solved: true, title: secret.title, artist: secret.artist };
   }
+  // Check for "Title Artist" or "Title - Artist" combo match
   if (fuzzyMatch(guess, `${secret.title} ${secret.artist}`) ||
       fuzzyMatch(guess, `${secret.title} - ${secret.artist}`)) {
-    return { barPercent: 100, heat: "🔥 ON FIRE", hint: "🎯 That's it!", solved: true, title: secret.title, artist: secret.artist };
+    return { barPercent: 100, heat: "🔥 ON FIRE", hint: "🎯 Got it!", solved: true, title: secret.title, artist: secret.artist };
   }
 
   // Find the guess in the database
@@ -93,9 +113,9 @@ function scoreSimilarity(secret, guess, allSongs) {
     guessEntry = allSongs.find(s => normalize(s.artist) === gl);
   }
 
-  // If it matched the secret through DB lookup
+  // If DB lookup matched the secret song — it's a win
   if (guessEntry && guessEntry.title === secret.title && guessEntry.artist === secret.artist) {
-    return { barPercent: 100, heat: "🔥 ON FIRE", hint: "🎯 That's it!", solved: true, title: secret.title, artist: secret.artist };
+    return { barPercent: 100, heat: "🔥 ON FIRE", hint: "🎯 Got it!", solved: true, title: secret.title, artist: secret.artist };
   }
 
   // Score unknown songs
@@ -103,8 +123,7 @@ function scoreSimilarity(secret, guess, allSongs) {
     return scoreUnknownSong(secret, guess, allSongs);
   }
 
-  // Calculate similarity score (lower = closer = hotter)
-  // We'll build a "closeness" score from 0–100, then map to heat
+  // Calculate closeness score 0–100
   let closeness = 0;
   let reasons = [];
 
@@ -124,7 +143,7 @@ function scoreSimilarity(secret, guess, allSongs) {
   else if (sharedTags.length >= 2) reasons.push("Some stylistic overlap");
   else if (sharedTags.length === 1) reasons.push(`Both have a "${sharedTags[0]}" vibe`);
 
-  // Genre family overlap (partial genre credit)
+  // Genre family overlap
   const familyOverlap = countGenreFamilyOverlap(secretTags, guessTags);
   closeness += familyOverlap * 5;
   if (familyOverlap > 0 && sharedTags.length === 0) {
@@ -142,7 +161,7 @@ function scoreSimilarity(secret, guess, allSongs) {
     closeness += 4;
   }
 
-  // Year proximity — much more generous bands
+  // Year proximity
   const yearDiff = Math.abs(guessEntry.year - secret.year);
   if (yearDiff === 0) {
     closeness += 15;
@@ -157,23 +176,13 @@ function scoreSimilarity(secret, guess, allSongs) {
   } else if (yearDiff <= 5) {
     closeness += 3;
   }
-  // Beyond 5 years: no year credit
 
-  // closeness: 0 = nothing in common, ~100 = very close
-  // barPercent = closeness clamped to 2–100 (higher = hotter = longer bar)
   let heat;
-
-  if (closeness >= 60) {
-    heat = "🔥 HOT";
-  } else if (closeness >= 40) {
-    heat = "♨️ WARM";
-  } else if (closeness >= 25) {
-    heat = "🌤️ LUKEWARM";
-  } else if (closeness >= 12) {
-    heat = "❄️ COOL";
-  } else {
-    heat = "🧊 FREEZING";
-  }
+  if (closeness >= 60) heat = "🔥 HOT";
+  else if (closeness >= 40) heat = "♨️ WARM";
+  else if (closeness >= 25) heat = "🌤️ LUKEWARM";
+  else if (closeness >= 12) heat = "❄️ COOL";
+  else heat = "🧊 FREEZING";
 
   const barPercent = Math.min(98, Math.max(2, closeness));
   let hint = reasons.length > 0 ? reasons[0] : "Different musical territory";
@@ -186,7 +195,6 @@ function scoreUnknownSong(secret, guessText, allSongs) {
   let closeness = 0;
   let hint = "Not in the database — shooting in the dark!";
 
-  // Check if they typed an artist name
   const artistMatch = allSongs.find(s => gl.includes(s.artist.toLowerCase()));
   if (artistMatch) {
     if (artistMatch.artist === secret.artist) {
@@ -235,7 +243,6 @@ exports.handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: "Missing session_id or guess" }) };
     }
 
-    // Get the session and secret song
     const sessions = await sql`
       SELECT gs.*, s.title, s.artist, s.tags, s.year, s.mood, s.tempo
       FROM game_sessions gs
@@ -257,17 +264,14 @@ exports.handler = async (event) => {
       tempo: session.tempo,
     };
 
-    // Get all songs for this category (for scoring)
     const allSongs = await sql`
       SELECT title, artist, tags, year, mood, tempo 
       FROM songs 
       WHERE category = ${session.category}
     `;
 
-    // Score the guess
     const result = scoreSimilarity(secret, guess, allSongs);
 
-    // Update session
     await sql`
       UPDATE game_sessions 
       SET guesses = guesses + 1, 
