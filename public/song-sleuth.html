@@ -49,8 +49,19 @@
       border-radius: 8px; color: #ffaa33; font-size: 18px;
       font-family: 'Righteous', cursive; cursor: pointer;
       transition: all 0.2s; margin-bottom: 8px;
+      display: flex; align-items: center; justify-content: space-between;
     }
     .era-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(255,100,50,0.3); border-color: #ff6633; }
+    .era-btn .btn-label { flex: 1; text-align: left; }
+    .era-btn .hot-badge {
+      font-size: 14px;
+      margin-left: 8px;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.3); }
+    }
     .locked-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; max-width: 400px; width: 100%; }
     .locked-btn {
       padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid #ffffff10;
@@ -58,6 +69,7 @@
     }
     .coming-soon { font-size: 11px; color: #555; margin-top: 16px; }
     .site-name { margin-top: 40px; font-size: 11px; color: #444; }
+    #category-list { width: 100%; max-width: 400px; display: flex; flex-direction: column; }
 
     /* GAME SCREEN */
     #game-screen { display: none; flex: 1; flex-direction: column; padding: 16px; }
@@ -166,15 +178,18 @@
     A secret song is chosen. Type song titles and find out how close you are. Use the clues to zero in on the answer.
   </div>
   <div class="era-label">CHOOSE YOUR CATEGORY</div>
-  <button class="era-btn" onclick="startGame('80s_top10')">🎵 80's TOP 10 HITS</button>
-  <button class="era-btn" onclick="startGame('90s_rap')" style="margin-top:4px">🎤 90's RAP & HIP HOP</button>
-  <button class="era-btn" onclick="startGame('90s_alt')" style="margin-top:4px">📀 90's ALTERNATIVE</button>
-  <button class="era-btn" onclick="startGame('punk')" style="margin-top:4px">🧷 PUNK & STUFF</button>
-  <button class="era-btn" onclick="startGame('vocaloid')" style="margin-top:4px">🎧 VOCALOID</button>
-  <button class="era-btn" onclick="startGame('yacht_rock')" style="margin-top:4px">⛵ YACHT ROCK</button>
-  <button class="era-btn" onclick="startGame('golden_oldies')" style="margin-top:4px">📻 GOLDEN OLDIES</button>
-  <button class="era-btn" onclick="startGame('hippie_vibes')" style="margin-top:4px">☮️ HIPPIE VIBES</button>
-  <button class="era-btn" onclick="startGame('classic_rock')" style="margin-top:4px">🎸 CLASSIC ROCK</button>
+  <div id="category-list">
+    <!-- Dynamically populated by loadCategories() -->
+    <button class="era-btn" onclick="startGame('80s_top10')"><span class="btn-label">🎵 80's TOP 10 HITS</span></button>
+    <button class="era-btn" onclick="startGame('90s_rap')"><span class="btn-label">🎤 90's RAP & HIP HOP</span></button>
+    <button class="era-btn" onclick="startGame('90s_alt')"><span class="btn-label">📀 90's ALTERNATIVE</span></button>
+    <button class="era-btn" onclick="startGame('punk')"><span class="btn-label">🧷 PUNK & STUFF</span></button>
+    <button class="era-btn" onclick="startGame('vocaloid')"><span class="btn-label">🎧 VOCALOID</span></button>
+    <button class="era-btn" onclick="startGame('yacht_rock')"><span class="btn-label">⛵ YACHT ROCK</span></button>
+    <button class="era-btn" onclick="startGame('golden_oldies')"><span class="btn-label">📻 GOLDEN OLDIES</span></button>
+    <button class="era-btn" onclick="startGame('hippie_vibes')"><span class="btn-label">☮️ HIPPIE VIBES</span></button>
+    <button class="era-btn" onclick="startGame('classic_rock')"><span class="btn-label">🎸 CLASSIC ROCK</span></button>
+  </div>
   <div class="locked-grid">
     <div class="locked-btn">🔒 70's HITS</div>
     <div class="locked-btn">🔒 2000's HITS</div>
@@ -220,6 +235,31 @@
 </div>
 
 <script>
+  // All known categories with their display info
+  const ALL_CATEGORIES = [
+    { id: '80s_top10',    label: "🎵 80'S TOP 10 HITS" },
+    { id: '90s_rap',      label: "🎤 90'S RAP & HIP HOP" },
+    { id: '90s_alt',      label: "📀 90'S ALTERNATIVE" },
+    { id: 'punk',         label: "🧷 PUNK & STUFF" },
+    { id: 'vocaloid',     label: "🎧 VOCALOID" },
+    { id: 'yacht_rock',   label: "⛵ YACHT ROCK" },
+    { id: 'golden_oldies',label: "📻 GOLDEN OLDIES" },
+    { id: 'hippie_vibes', label: "☮️ HIPPIE VIBES" },
+    { id: 'classic_rock', label: "🎸 CLASSIC ROCK" },
+  ];
+
+  const categoryLabels = {
+    '80s_top10':     "🎵 80's Top 10",
+    '90s_rap':       "🎤 90's Rap & Hip Hop",
+    '90s_alt':       "📀 90's Alternative",
+    'punk':          "🧷 Punk",
+    'vocaloid':      "🎧 Vocaloid",
+    'yacht_rock':    "⛵ Yacht Rock",
+    'golden_oldies': "📻 Golden Oldies",
+    'hippie_vibes':  "☮️ Hippie Vibes",
+    'classic_rock':  "🎸 Classic Rock",
+  };
+
   // Game state
   let sessionId = null;
   let songCount = 0;
@@ -237,18 +277,6 @@
 
   const HINT_PENALTIES = [0, 2, 3, 4, 5];
 
-  const categoryLabels = {
-    '80s_top10': "🎵 80's Top 10",
-    '90s_rap': "🎤 90's Rap & Hip Hop",
-    '90s_alt': "📀 90's Alternative",
-    'punk': "🧷 Punk",
-    'vocaloid': "🎧 Vocaloid",
-    'yacht_rock': "⛵ Yacht Rock",
-    'golden_oldies': "📻 Golden Oldies",
-    'hippie_vibes': "☮️ Hippie Vibes",
-    'classic_rock': "🎸 Classic Rock",
-  };
-
   function getHeatColor(heat) {
     if (!heat) return "#4488ff";
     if (heat.includes("ON FIRE")) return "#ff2222";
@@ -262,22 +290,62 @@
   function showTitle() {
     document.getElementById('title-screen').style.display = 'flex';
     document.getElementById('game-screen').style.display = 'none';
-    loadPlayCount();
+    loadStats();
   }
 
-  async function loadPlayCount() {
+  async function loadStats() {
     try {
       const res = await fetch('/.netlify/functions/stats');
       const data = await res.json();
+
+      // Update total play counter
       if (data.total_games) {
         const el = document.getElementById('play-counter');
         el.textContent = `🕹️ ${data.total_games.toLocaleString()} games played`;
         el.style.opacity = '1';
       }
-    } catch (e) { /* silent fail */ }
+
+      // Build lookup maps for play counts
+      const allTimeMap = {};
+      (data.all_time || []).forEach(row => { allTimeMap[row.category] = row.plays; });
+
+      const last24hMap = {};
+      (data.last_24h || []).forEach(row => { last24hMap[row.category] = row.plays; });
+
+      // Find the hottest category in the last 24h (must have at least 1 play)
+      let hottestCategory = null;
+      let hottestPlays = 0;
+      Object.entries(last24hMap).forEach(([cat, plays]) => {
+        if (plays > hottestPlays) {
+          hottestPlays = plays;
+          hottestCategory = cat;
+        }
+      });
+
+      // Sort categories by all-time plays descending; zeros go to bottom
+      const sorted = [...ALL_CATEGORIES].sort((a, b) => {
+        return (allTimeMap[b.id] || 0) - (allTimeMap[a.id] || 0);
+      });
+
+      // Re-render the category list
+      const list = document.getElementById('category-list');
+      list.innerHTML = sorted.map(cat => {
+        const isHot = cat.id === hottestCategory && hottestPlays > 0;
+        return `
+          <button class="era-btn" onclick="startGame('${cat.id}')">
+            <span class="btn-label">${cat.label}</span>
+            ${isHot ? '<span class="hot-badge">🔥</span>' : ''}
+          </button>
+        `;
+      }).join('');
+
+    } catch (e) {
+      // Silent fail — static buttons already in DOM as fallback
+    }
   }
 
-  loadPlayCount();
+  // Load stats on page init
+  loadStats();
 
   async function startGame(category) {
     try {
