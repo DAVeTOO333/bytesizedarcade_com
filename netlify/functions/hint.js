@@ -1,14 +1,11 @@
 const { getDb } = require("./db");
 
 function titleToBlanks(title) {
-  // Split into tokens: words and parentheses groups
-  // Show first letter of each word, underscores for remaining letters, preserve parens
   let result = '';
   let i = 0;
   while (i < title.length) {
     const ch = title[i];
     if (ch === '(') {
-      // Preserve opening paren, then process word inside
       result += '(';
       i++;
     } else if (ch === ')') {
@@ -18,7 +15,6 @@ function titleToBlanks(title) {
       result += ' ';
       i++;
     } else {
-      // Start of a word — show first letter, underscores for rest
       result += ch.toUpperCase();
       i++;
       while (i < title.length && title[i] !== ' ' && title[i] !== '(' && title[i] !== ')') {
@@ -30,12 +26,29 @@ function titleToBlanks(title) {
   return result;
 }
 
-// Hint penalties: hint index 0 = free, 1 = +2, 2 = +3, 3 = +4, 4 = +5
+// Tags that restate the category the player already chose — never useful as hints
+const CATEGORY_RESTATE_TAGS = new Set([
+  '80s alt', '80s alternative', '80s top 10', '80s hits',
+  '90s alt', '90s alternative', '90s rap', 'hip hop', 'rap',
+  'punk', 'vocaloid', 'yacht rock', 'golden oldies', 'oldies',
+  'hippie vibes', 'classic rock',
+]);
+
+// Truly generic tags that add no information
+const GENERIC_TAGS = new Set([
+  '1970s','1971s','1972s','1973s','1974s','1975s','1976s','1977s','1978s','1979s',
+  '1980s','1981s','1982s','1983s','1984s','1985s','1986s','1987s','1988s','1989s',
+  '1990s','1991s','1992s','1993s','1994s','1995s','1996s','1997s','1998s','1999s',
+  '2000s','2001s','2002s','2003s','2004s','2005s',
+  'pop','alternative','rock','cover','tribute','movie soundtrack','instrumental',
+  'novelty','experimental','duet','remix','party','fun','catchy','dance',
+  'romantic','anthem','classic','hit','song',
+]);
+
 const HINT_PENALTIES = [0, 2, 3, 4, 5];
 
-// Hint unlocks: after guess 1 for first hint, then every guess after
 function getRequiredGuesses(hintIndex) {
-  return hintIndex + 1; // hint 0 unlocks after guess 1, hint 1 after guess 2, etc.
+  return hintIndex + 1;
 }
 
 exports.handler = async (event) => {
@@ -63,9 +76,8 @@ exports.handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: "Not enough guesses to unlock hint" }) };
     }
 
-    // Get the secret song
     const sessions = await sql`
-      SELECT s.title, s.artist, s.tags, s.year
+      SELECT s.title, s.artist, s.tags, s.year, gs.category
       FROM game_sessions gs
       JOIN songs s ON s.id = gs.secret_song_id
       WHERE gs.id = ${session_id}
@@ -83,12 +95,26 @@ exports.handler = async (event) => {
     let newFullTitleUsed = full_title_used;
 
     if (hints_used === 0) {
-      // Hint 1: genre — pick most representative tag, skip generic/decade tags
-      const genericTags = new Set(['1980s','1981s','1982s','1983s','1984s','1985s','1986s','1987s','1988s','1989s','1990s','1991s','1992s','1993s','1994s','1995s','1996s','1997s','1998s','1999s','2000s','pop','alternative','cover','tribute','movie soundtrack','instrumental','novelty','experimental','duet','remix','party','fun','catchy','dance','romantic','anthem']);
-      const bestTag = secret.tags.find(t => !genericTags.has(t)) || secret.tags[0];
-      hint = `🎵 Genre: ${bestTag}`;
+      // Hint 1: most specific/interesting genre tag
+      // Filter out: category restatements, generic tags, and anything that contains the category id words
+      const categoryWords = (secret.category || '').toLowerCase().replace(/_/g, ' ').split(' ').filter(w => w.length > 2);
+
+      const bestTag = secret.tags.find(t => {
+        const tl = t.toLowerCase();
+        if (CATEGORY_RESTATE_TAGS.has(tl)) return false;
+        if (GENERIC_TAGS.has(tl)) return false;
+        // Skip if tag is just a restatement of the category id words
+        if (categoryWords.some(w => tl === w || tl === w + 's')) return false;
+        return true;
+      }) || null;
+
+      if (bestTag) {
+        hint = `🎵 Genre: ${bestTag}`;
+      } else {
+        // Fallback: year
+        hint = `📅 Released: ${secret.year}`;
+      }
     } else if (hints_used === 1) {
-      // Hint 2: random — first letter of artist OR first letter of song title
       const useArtist = Math.random() < 0.5;
       if (useArtist) {
         hint = `🎤 Artist starts with "${secret.artist[0].toUpperCase()}"`;
@@ -98,7 +124,6 @@ exports.handler = async (event) => {
         newTitleHintUsed = true;
       }
     } else if (hints_used === 2) {
-      // Hint 3: whichever of artist/title first letter we didn't get yet
       if (!newArtistHintUsed) {
         hint = `🎤 Artist starts with "${secret.artist[0].toUpperCase()}"`;
         newArtistHintUsed = true;
@@ -107,7 +132,6 @@ exports.handler = async (event) => {
         newTitleHintUsed = true;
       }
     } else if (hints_used === 3) {
-      // Hint 4: random — full artist name OR title with word-initial letters + underscores
       const useArtist = Math.random() < 0.5;
       if (useArtist) {
         hint = `🎤 Artist: ${secret.artist}`;
@@ -117,7 +141,6 @@ exports.handler = async (event) => {
         newFullTitleUsed = true;
       }
     } else if (hints_used === 4) {
-      // Hint 5: whichever full reveal hint 4 did NOT give
       if (!newFullArtistUsed) {
         hint = `🎤 Artist: ${secret.artist}`;
         newFullArtistUsed = true;
@@ -127,7 +150,6 @@ exports.handler = async (event) => {
       }
     }
 
-    // Update session hints count
     await sql`
       UPDATE game_sessions SET hints_used = ${hints_used + 1} WHERE id = ${session_id}
     `;
