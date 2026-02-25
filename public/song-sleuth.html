@@ -49,13 +49,11 @@
       border-radius: 8px; color: #ffaa33; font-size: 18px;
       font-family: 'Righteous', cursive; cursor: pointer;
       transition: all 0.2s; margin-bottom: 8px;
-      display: flex; align-items: center; justify-content: space-between;
+      text-align: center;
     }
     .era-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(255,100,50,0.3); border-color: #ff6633; }
-    .era-btn .btn-label { flex: 1; text-align: left; }
-    .era-btn .hot-badge {
-      font-size: 14px;
-      margin-left: 8px;
+    .hot-badge {
+      display: inline-block;
       animation: pulse 1.5s ease-in-out infinite;
     }
     @keyframes pulse {
@@ -179,16 +177,16 @@
   </div>
   <div class="era-label">CHOOSE YOUR CATEGORY</div>
   <div id="category-list">
-    <!-- Dynamically populated by loadCategories() -->
-    <button class="era-btn" onclick="startGame('80s_top10')"><span class="btn-label">🎵 80's TOP 10 HITS</span></button>
-    <button class="era-btn" onclick="startGame('90s_rap')"><span class="btn-label">🎤 90's RAP & HIP HOP</span></button>
-    <button class="era-btn" onclick="startGame('90s_alt')"><span class="btn-label">📀 90's ALTERNATIVE</span></button>
-    <button class="era-btn" onclick="startGame('punk')"><span class="btn-label">🧷 PUNK & STUFF</span></button>
-    <button class="era-btn" onclick="startGame('vocaloid')"><span class="btn-label">🎧 VOCALOID</span></button>
-    <button class="era-btn" onclick="startGame('yacht_rock')"><span class="btn-label">⛵ YACHT ROCK</span></button>
-    <button class="era-btn" onclick="startGame('golden_oldies')"><span class="btn-label">📻 GOLDEN OLDIES</span></button>
-    <button class="era-btn" onclick="startGame('hippie_vibes')"><span class="btn-label">☮️ HIPPIE VIBES</span></button>
-    <button class="era-btn" onclick="startGame('classic_rock')"><span class="btn-label">🎸 CLASSIC ROCK</span></button>
+    <!-- Dynamically populated by loadStats() -->
+    <button class="era-btn" onclick="startGame('80s_top10')">🎵 80's TOP 10 HITS</button>
+    <button class="era-btn" onclick="startGame('90s_rap')">🎤 90's RAP & HIP HOP</button>
+    <button class="era-btn" onclick="startGame('90s_alt')">📀 90's ALTERNATIVE</button>
+    <button class="era-btn" onclick="startGame('punk')">🧷 PUNK & STUFF</button>
+    <button class="era-btn" onclick="startGame('vocaloid')">🎧 VOCALOID</button>
+    <button class="era-btn" onclick="startGame('yacht_rock')">⛵ YACHT ROCK</button>
+    <button class="era-btn" onclick="startGame('golden_oldies')">📻 GOLDEN OLDIES</button>
+    <button class="era-btn" onclick="startGame('hippie_vibes')">☮️ HIPPIE VIBES</button>
+    <button class="era-btn" onclick="startGame('classic_rock')">🎸 CLASSIC ROCK</button>
   </div>
   <div class="locked-grid">
     <div class="locked-btn">🔒 70's HITS</div>
@@ -237,15 +235,15 @@
 <script>
   // All known categories with their display info
   const ALL_CATEGORIES = [
-    { id: '80s_top10',    label: "🎵 80'S TOP 10 HITS" },
-    { id: '90s_rap',      label: "🎤 90'S RAP & HIP HOP" },
-    { id: '90s_alt',      label: "📀 90'S ALTERNATIVE" },
-    { id: 'punk',         label: "🧷 PUNK & STUFF" },
-    { id: 'vocaloid',     label: "🎧 VOCALOID" },
-    { id: 'yacht_rock',   label: "⛵ YACHT ROCK" },
-    { id: 'golden_oldies',label: "📻 GOLDEN OLDIES" },
-    { id: 'hippie_vibes', label: "☮️ HIPPIE VIBES" },
-    { id: 'classic_rock', label: "🎸 CLASSIC ROCK" },
+    { id: '80s_top10',     label: "🎵 80'S TOP 10 HITS" },
+    { id: '90s_rap',       label: "🎤 90'S RAP & HIP HOP" },
+    { id: '90s_alt',       label: "📀 90'S ALTERNATIVE" },
+    { id: 'punk',          label: "🧷 PUNK & STUFF" },
+    { id: 'vocaloid',      label: "🎧 VOCALOID" },
+    { id: 'yacht_rock',    label: "⛵ YACHT ROCK" },
+    { id: 'golden_oldies', label: "📻 GOLDEN OLDIES" },
+    { id: 'hippie_vibes',  label: "☮️ HIPPIE VIBES" },
+    { id: 'classic_rock',  label: "🎸 CLASSIC ROCK" },
   ];
 
   const categoryLabels = {
@@ -331,12 +329,8 @@
       const list = document.getElementById('category-list');
       list.innerHTML = sorted.map(cat => {
         const isHot = cat.id === hottestCategory && hottestPlays > 0;
-        return `
-          <button class="era-btn" onclick="startGame('${cat.id}')">
-            <span class="btn-label">${cat.label}</span>
-            ${isHot ? '<span class="hot-badge">🔥</span>' : ''}
-          </button>
-        `;
+        const badge = isHot ? ' <span class="hot-badge">🔥</span>' : '';
+        return `<button class="era-btn" onclick="startGame('${cat.id}')">${cat.label}${badge}</button>`;
       }).join('');
 
     } catch (e) {
