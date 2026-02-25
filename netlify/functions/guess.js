@@ -14,26 +14,20 @@ function fuzzyMatch(input, target) {
   const a = normalize(input);
   const b = normalize(target);
 
-  // Exact match
   if (a === b) return true;
 
-  // Strip common articles/filler words for comparison
   const strip = (s) => s.replace(/\b(the|a|an|of|in|on|my|your|i|we|is|it|to|and|or)\b/g, "").replace(/\s+/g, " ").trim();
   const sa = strip(a);
   const sb = strip(b);
 
-  // Stripped exact match (e.g. "The Chain" vs "Chain")
   if (sa.length >= 3 && sb.length >= 3 && sa === sb) return true;
 
-  // Substring match ONLY if the shorter string is at least 60% the length of the longer
-  // This prevents "Kiss" matching "Kiss on My List"
   const shorter = a.length <= b.length ? a : b;
   const longer  = a.length <= b.length ? b : a;
   const lengthRatio = shorter.length / longer.length;
 
   if (lengthRatio >= 0.6 && longer.includes(shorter)) return true;
 
-  // Same for stripped versions
   const sShorter = sa.length <= sb.length ? sa : sb;
   const sLonger  = sa.length <= sb.length ? sb : sa;
   const sRatio = sShorter.length > 0 ? sShorter.length / sLonger.length : 0;
@@ -43,7 +37,6 @@ function fuzzyMatch(input, target) {
   return false;
 }
 
-// Genre family groupings — songs within the same family get partial credit
 const GENRE_FAMILIES = [
   ['pop', 'dance pop', 'teen pop', 'synth pop', 'dance'],
   ['rock', 'pop rock', 'arena rock', 'heartland rock', 'hard rock', 'hair metal', 'southern rock', 'blues rock'],
@@ -83,22 +76,15 @@ function countGenreFamilyOverlap(tagsA, tagsB) {
   return overlap;
 }
 
-// Check if a string looks like ONLY an artist name (not a song title).
-// We detect this by checking if the guess matches any artist name in the DB
-// but does NOT match any song title. If so, it's an artist-only guess and
-// can never be a solve — only inform scoring.
 function findGuessEntry(guess, allSongs) {
   const gl = normalize(guess);
 
-  // 1. Exact title match
   let entry = allSongs.find(s => normalize(s.title) === gl);
   if (entry) return { entry, artistOnlyGuess: false };
 
-  // 2. Fuzzy title match
   entry = allSongs.find(s => fuzzyMatch(guess, s.title));
   if (entry) return { entry, artistOnlyGuess: false };
 
-  // 3. Word-overlap title match
   if (gl.length >= 4) {
     entry = allSongs.find(s => {
       const nt = normalize(s.title);
@@ -110,11 +96,9 @@ function findGuessEntry(guess, allSongs) {
     if (entry) return { entry, artistOnlyGuess: false };
   }
 
-  // 4. Artist name match — ONLY used for scoring context, never for solving
   entry = allSongs.find(s => normalize(s.artist) === gl);
   if (entry) return { entry, artistOnlyGuess: true };
 
-  // 5. Partial artist name match (e.g. "Petty" for "Tom Petty")
   entry = allSongs.find(s => {
     const na = normalize(s.artist);
     return na.includes(gl) && gl.length >= 4;
@@ -124,43 +108,64 @@ function findGuessEntry(guess, allSongs) {
   return { entry: null, artistOnlyGuess: false };
 }
 
-function scoreSimilarity(secret, guess, allSongs) {
-  // SOLVE CHECK 1: Exact/fuzzy title match only — never artist name alone
+const WRONG_CATEGORY_HINTS = [
+  "Great song — wrong category!",
+  "Nice pick, but that's in a different category",
+  "Real one! But not in this category",
+  "Good taste, wrong category though",
+  "That song exists — just not in this category",
+  "Solid choice, but check the category!",
+];
+
+function scoreSimilarity(secret, guess, allSongs, wrongCategoryMatch) {
   if (fuzzyMatch(guess, secret.title)) {
     return { barPercent: 100, heat: "🔥 ON FIRE", hint: "🎯 Got it!", solved: true, title: secret.title, artist: secret.artist };
   }
 
-  // SOLVE CHECK 2: "Title Artist" or "Title - Artist" combo
   if (fuzzyMatch(guess, `${secret.title} ${secret.artist}`) ||
       fuzzyMatch(guess, `${secret.title} - ${secret.artist}`)) {
     return { barPercent: 100, heat: "🔥 ON FIRE", hint: "🎯 Got it!", solved: true, title: secret.title, artist: secret.artist };
   }
 
-  // Find the guess in the database, flagging if it's an artist-only match
   const { entry: guessEntry, artistOnlyGuess } = findGuessEntry(guess, allSongs);
 
-  // If DB lookup found the exact secret song by title — it's a win
-  // BUT only if this wasn't an artist-name-only lookup
   if (guessEntry && !artistOnlyGuess &&
       guessEntry.title === secret.title &&
       guessEntry.artist === secret.artist) {
     return { barPercent: 100, heat: "🔥 ON FIRE", hint: "🎯 Got it!", solved: true, title: secret.title, artist: secret.artist };
   }
 
-  // Score unknown songs (not in DB at all)
+  // Song is in the DB but in a different category
+  if (!guessEntry && wrongCategoryMatch) {
+    const hint = WRONG_CATEGORY_HINTS[Math.floor(Math.random() * WRONG_CATEGORY_HINTS.length)];
+    // Score it like a known song with some tag overlap
+    const sharedTags = (wrongCategoryMatch.tags || []).filter(t => (secret.tags || []).includes(t));
+    const familyOverlap = countGenreFamilyOverlap(wrongCategoryMatch.tags || [], secret.tags || []);
+    const yearDiff = Math.abs(wrongCategoryMatch.year - secret.year);
+    let closeness = 5 + sharedTags.length * 6 + familyOverlap * 4;
+    if (yearDiff <= 2) closeness += 8;
+    else if (yearDiff <= 5) closeness += 4;
+    closeness = Math.min(closeness, 50); // cap — they're not in the right ballpark category-wise
+
+    let heat;
+    if (closeness >= 40) heat = "♨️ WARM";
+    else if (closeness >= 25) heat = "🌤️ LUKEWARM";
+    else if (closeness >= 12) heat = "❄️ COOL";
+    else heat = "🧊 FREEZING";
+
+    return { barPercent: Math.max(2, closeness), heat, hint, solved: false };
+  }
+
   if (!guessEntry) {
     return scoreUnknownSong(secret, guess, allSongs);
   }
 
-  // Calculate closeness score 0–100
   let closeness = 0;
   let reasons = [];
 
-  // Same artist: big boost, but capped so artist-name guesses stay well below 100
   if (guessEntry.artist === secret.artist) {
     closeness += 50;
     if (artistOnlyGuess) {
-      // They typed just the artist name — tell them they're warm but haven't named a song
       reasons.push(`Right artist! Now guess a song title`);
     } else {
       reasons.push(`Same artist: ${secret.artist}`);
@@ -170,32 +175,27 @@ function scoreSimilarity(secret, guess, allSongs) {
   const secretTags = secret.tags || [];
   const guessTags = guessEntry.tags || [];
 
-  // Exact tag matches
   const sharedTags = guessTags.filter(t => secretTags.includes(t));
   closeness += sharedTags.length * 8;
   if (sharedTags.length >= 3) reasons.push("Very similar style");
   else if (sharedTags.length >= 2) reasons.push("Some stylistic overlap");
   else if (sharedTags.length === 1) reasons.push(`Both have a "${sharedTags[0]}" vibe`);
 
-  // Genre family overlap
   const familyOverlap = countGenreFamilyOverlap(secretTags, guessTags);
   closeness += familyOverlap * 5;
   if (familyOverlap > 0 && sharedTags.length === 0) {
     reasons.push("Related musical style");
   }
 
-  // Mood match
   if (guessEntry.mood === secret.mood) {
     closeness += 8;
     if (!reasons.length) reasons.push("Similar mood");
   }
 
-  // Tempo match
   if (guessEntry.tempo === secret.tempo) {
     closeness += 4;
   }
 
-  // Year proximity
   const yearDiff = Math.abs(guessEntry.year - secret.year);
   if (yearDiff === 0) {
     closeness += 15;
@@ -211,7 +211,6 @@ function scoreSimilarity(secret, guess, allSongs) {
     closeness += 3;
   }
 
-  // Hard cap: artist-only guesses can never reach 100 or appear solved
   if (artistOnlyGuess) {
     closeness = Math.min(closeness, 75);
   }
@@ -303,13 +302,30 @@ exports.handler = async (event) => {
       tempo: session.tempo,
     };
 
+    // Songs in the current category — used for scoring
     const allSongs = await sql`
       SELECT title, artist, tags, year, mood, tempo 
       FROM songs 
       WHERE category = ${session.category}
     `;
 
-    const result = scoreSimilarity(secret, guess, allSongs);
+    // Check if the guess exists in a DIFFERENT category
+    let wrongCategoryMatch = null;
+    const { entry: inCategory } = findGuessEntry(guess, allSongs);
+    if (!inCategory) {
+      const otherMatches = await sql`
+        SELECT title, artist, tags, year, mood, tempo
+        FROM songs
+        WHERE category != ${session.category}
+        LIMIT 500
+      `;
+      const { entry: other, artistOnlyGuess } = findGuessEntry(guess, otherMatches);
+      if (other && !artistOnlyGuess) {
+        wrongCategoryMatch = other;
+      }
+    }
+
+    const result = scoreSimilarity(secret, guess, allSongs, wrongCategoryMatch);
 
     await sql`
       UPDATE game_sessions 
