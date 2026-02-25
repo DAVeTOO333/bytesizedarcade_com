@@ -124,30 +124,31 @@
 <body>
 
 <div id="title-screen">
-  <div class="music-notes">&#9834; &#9835; &#9834;</div>
+  <div class="music-notes">♪ ♫ ♪</div>
   <div class="game-title">SONG SLEUTH</div>
-  <div class="subtitle">GUESS THE SONG &middot; GET WARMER &middot; FIND THE HIT</div>
+  <div class="subtitle">GUESS THE SONG · GET WARMER · FIND THE HIT</div>
   <div class="description">
     A secret song is chosen. Type song titles and find out how close you are. Use the clues to zero in on the answer.
   </div>
   <div class="era-label">CHOOSE YOUR CATEGORY</div>
   <div id="category-list">
-    <button class="era-btn" onclick="startGame('80s_top10')">&#127925; 80's TOP 10 HITS</button>
-    <button class="era-btn" onclick="startGame('80s_alt')">&#128252; 80's ALTERNATIVE</button>
-    <button class="era-btn" onclick="startGame('90s_rap')">&#127908; 90's RAP &amp; HIP HOP</button>
-    <button class="era-btn" onclick="startGame('90s_alt')">&#128192; 90's ALTERNATIVE</button>
-    <button class="era-btn" onclick="startGame('punk')">&#129015; PUNK &amp; STUFF</button>
-    <button class="era-btn" onclick="startGame('vocaloid')">&#127911; VOCALOID</button>
-    <button class="era-btn" onclick="startGame('yacht_rock')">&#9971; YACHT ROCK</button>
-    <button class="era-btn" onclick="startGame('golden_oldies')">&#128251; GOLDEN OLDIES</button>
-    <button class="era-btn" onclick="startGame('hippie_vibes')">&#9774; HIPPIE VIBES</button>
-    <button class="era-btn" onclick="startGame('classic_rock')">&#127928; CLASSIC ROCK</button>
+    <!-- Static fallback; replaced dynamically by loadStats() -->
+    <button class="era-btn" onclick="startGame('80s_top10')">🎵 80's TOP 10 HITS</button>
+    <button class="era-btn" onclick="startGame('80s_alt')">📼 80's ALT BANDS</button>
+    <button class="era-btn" onclick="startGame('90s_rap')">🎤 90's RAP & HIP HOP</button>
+    <button class="era-btn" onclick="startGame('90s_alt')">📀 90's ALTERNATIVE</button>
+    <button class="era-btn" onclick="startGame('punk')">🧷 PUNK & STUFF</button>
+    <button class="era-btn" onclick="startGame('vocaloid')">🎧 VOCALOID</button>
+    <button class="era-btn" onclick="startGame('yacht_rock')">⛵ YACHT ROCK</button>
+    <button class="era-btn" onclick="startGame('golden_oldies')">📻 GOLDEN OLDIES</button>
+    <button class="era-btn" onclick="startGame('hippie_vibes')">☮️ HIPPIE VIBES</button>
+    <button class="era-btn" onclick="startGame('classic_rock')">🎸 CLASSIC ROCK</button>
   </div>
   <div class="locked-grid">
-    <div class="locked-btn">&#128274; 70's HITS</div>
-    <div class="locked-btn">&#128274; 2000's HITS</div>
-    <div class="locked-btn">&#128274; COUNTRY</div>
-    <div class="locked-btn">&#128274; ALL CATEGORIES</div>
+    <div class="locked-btn">🔒 70's HITS</div>
+    <div class="locked-btn">🔒 2000's HITS</div>
+    <div class="locked-btn">🔒 COUNTRY</div>
+    <div class="locked-btn">🔒 ALL CATEGORIES</div>
   </div>
   <div class="coming-soon">More categories coming soon...</div>
   <div id="play-counter" style="margin-top:12px;font-size:13px;color:#6666aa;letter-spacing:1px;opacity:0;transition:opacity 0.5s ease;"></div>
@@ -158,7 +159,7 @@
   <div class="header">
     <div class="header-title" onclick="showTitle()">SONG SLEUTH</div>
     <div style="display:flex;align-items:center;gap:12px;">
-      <span class="header-info" id="header-info">&#127925; 80's Top 10 &middot; Guesses: 0</span>
+      <span class="header-info" id="header-info">🎵 80's Top 10 · Guesses: 0</span>
       <button class="header-btn" id="action-btn" onclick="handleAction()">GIVE UP</button>
     </div>
   </div>
@@ -169,14 +170,14 @@
     </div>
     <div class="info-row">
       <span class="db-count" id="db-count"></span>
-      <button class="hint-btn locked" id="hint-btn" onclick="requestHint()">&#128161; HINT (guess first)</button>
+      <button class="hint-btn locked" id="hint-btn" onclick="requestHint()">💡 HINT (guess first)</button>
     </div>
     <div class="hints-box" id="hints-box" style="display:none"></div>
   </div>
   <div id="result-area"></div>
   <div class="guesses-container" id="guesses-container">
     <div class="empty-state" id="empty-state">
-      <div class="empty-emoji">&#127925;</div>
+      <div class="empty-emoji">🎵</div>
       <div class="empty-text">A secret song has been chosen</div>
       <div class="empty-sub" id="empty-sub"></div>
     </div>
@@ -185,29 +186,29 @@
 
 <script>
   const ALL_CATEGORIES = [
-    { id: '80s_top10',     label: "&#127925; 80'S TOP 10 HITS" },
-    { id: '80s_alt',       label: "&#128252; 80'S ALTERNATIVE" },
-    { id: '90s_rap',       label: "&#127908; 90'S RAP &amp; HIP HOP" },
-    { id: '90s_alt',       label: "&#128192; 90'S ALTERNATIVE" },
-    { id: 'punk',          label: "&#129015; PUNK &amp; STUFF" },
-    { id: 'vocaloid',      label: "&#127911; VOCALOID" },
-    { id: 'yacht_rock',    label: "&#9971; YACHT ROCK" },
-    { id: 'golden_oldies', label: "&#128251; GOLDEN OLDIES" },
-    { id: 'hippie_vibes',  label: "&#9774; HIPPIE VIBES" },
-    { id: 'classic_rock',  label: "&#127928; CLASSIC ROCK" },
+    { id: '80s_top10',     label: "🎵 80'S TOP 10 HITS" },
+    { id: '80s_alt',       label: "📼 80'S ALT BANDS" },
+    { id: '90s_rap',       label: "🎤 90'S RAP & HIP HOP" },
+    { id: '90s_alt',       label: "📀 90'S ALTERNATIVE" },
+    { id: 'punk',          label: "🧷 PUNK & STUFF" },
+    { id: 'vocaloid',      label: "🎧 VOCALOID" },
+    { id: 'yacht_rock',    label: "⛵ YACHT ROCK" },
+    { id: 'golden_oldies', label: "📻 GOLDEN OLDIES" },
+    { id: 'hippie_vibes',  label: "☮️ HIPPIE VIBES" },
+    { id: 'classic_rock',  label: "🎸 CLASSIC ROCK" },
   ];
 
   const categoryLabels = {
-    '80s_top10':     "80's Top 10",
-    '80s_alt':       "80's Alternative",
-    '90s_rap':       "90's Rap & Hip Hop",
-    '90s_alt':       "90's Alternative",
-    'punk':          "Punk",
-    'vocaloid':      "Vocaloid",
-    'yacht_rock':    "Yacht Rock",
-    'golden_oldies': "Golden Oldies",
-    'hippie_vibes':  "Hippie Vibes",
-    'classic_rock':  "Classic Rock",
+    '80s_top10':     "🎵 80's Top 10",
+    '80s_alt':       "📼 80's Alt Bands",
+    '90s_rap':       "🎤 90's Rap & Hip Hop",
+    '90s_alt':       "📀 90's Alternative",
+    'punk':          "🧷 Punk",
+    'vocaloid':      "🎧 Vocaloid",
+    'yacht_rock':    "⛵ Yacht Rock",
+    'golden_oldies': "📻 Golden Oldies",
+    'hippie_vibes':  "☮️ Hippie Vibes",
+    'classic_rock':  "🎸 Classic Rock",
   };
 
   let sessionId = null, songCount = 0, guesses = [], hintsUsed = 0, hintMessages = [];
@@ -238,7 +239,7 @@
       const data = await res.json();
       if (data.total_games) {
         const el = document.getElementById('play-counter');
-        el.textContent = '&#127918; ' + data.total_games.toLocaleString() + ' games played';
+        el.textContent = '🕹️ ' + data.total_games.toLocaleString() + ' games played';
         el.style.opacity = '1';
       }
       const allTimeMap = {};
@@ -253,7 +254,7 @@
       const list = document.getElementById('category-list');
       list.innerHTML = sorted.map(cat => {
         const isHot = cat.id === hottestCategory && hottestPlays > 0;
-        const badge = isHot ? ' <span class="hot-badge">&#128293;</span>' : '';
+        const badge = isHot ? ' <span class="hot-badge">🔥</span>' : '';
         return '<button class="era-btn" onclick="startGame(\'' + cat.id + '\')">' + cat.label + badge + '</button>';
       }).join('');
     } catch (e) {}
@@ -361,10 +362,10 @@
     const guessCount = guesses.length;
     const penaltyStr = hintPenaltyTotal > 0 ? ' + ' + hintPenaltyTotal + ' hint penalty' : '';
     const total = guessCount + hintPenaltyTotal;
-    const noHints = hintsUsed === 0 ? ' · No hints! &#127942;' : '';
+    const noHints = hintsUsed === 0 ? ' · No hints! 🏆' : '';
     const artistLine = artist ? '<div style="font-size:14px;color:#8888aa;margin-bottom:8px;">' + escapeHtml(artist) + '</div>' : '';
     document.getElementById('result-area').innerHTML =
-      '<div class="result-box win"><div class="result-emoji">&#127881;</div>'
+      '<div class="result-box win"><div class="result-emoji">🎉</div>'
       + '<div class="result-title">YOU GOT IT!</div>'
       + '<div class="result-song">' + escapeHtml(title) + '</div>' + artistLine
       + '<div class="result-stats">' + guessCount + ' guess' + (guessCount !== 1 ? 'es' : '') + penaltyStr + ' = ' + total + ' total' + noHints + '</div>'
@@ -387,12 +388,12 @@
     const isFree = penalty === 0;
     const remaining = 5 - hintsUsed;
     if (available) {
-      if (isFree) { btn.className = 'hint-btn free'; btn.textContent = '&#128161; HINT (FREE · ' + remaining + ' left)'; }
-      else { btn.className = 'hint-btn available'; btn.textContent = '&#128161; HINT (+' + penalty + ' penalty · ' + remaining + ' left)'; }
+      if (isFree) { btn.className = 'hint-btn free'; btn.textContent = '💡 HINT (FREE · ' + remaining + ' left)'; }
+      else { btn.className = 'hint-btn available'; btn.textContent = '💡 HINT (+' + penalty + ' penalty · ' + remaining + ' left)'; }
     } else {
       btn.className = 'hint-btn locked';
       const diff = required - guesses.length;
-      btn.textContent = '&#128274; HINT (' + diff + ' more guess' + (diff !== 1 ? 'es' : '') + ' to unlock)';
+      btn.textContent = '🔒 HINT (' + diff + ' more guess' + (diff !== 1 ? 'es' : '') + ' to unlock)';
     }
   }
 
@@ -431,7 +432,7 @@
   }
 
   function renderGuessContent(g, color) {
-    const heatLabel = g.solved ? '&#127919; Got it!' : (g.heat || '&#129398; FREEZING');
+    const heatLabel = g.solved ? '🎯 Got it!' : (g.heat || '🧊 FREEZING');
     const barWidth = g.barPercent !== undefined ? g.barPercent : 2;
     let html = '<div class="guess-header"><span class="guess-text">' + escapeHtml(g.guess) + '</span>'
       + '<span class="guess-heat" style="color:' + color + '">' + heatLabel + '</span></div>'
