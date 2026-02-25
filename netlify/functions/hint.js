@@ -1,11 +1,33 @@
 const { getDb } = require("./db");
 
 function titleToBlanks(title) {
-  return title.split("").map((ch, i) => {
-    if (i === 0) return ch.toUpperCase();
-    if (ch === " ") return " ";
-    return "_";
-  }).join("");
+  // Split into tokens: words and parentheses groups
+  // Show first letter of each word, underscores for remaining letters, preserve parens
+  let result = '';
+  let i = 0;
+  while (i < title.length) {
+    const ch = title[i];
+    if (ch === '(') {
+      // Preserve opening paren, then process word inside
+      result += '(';
+      i++;
+    } else if (ch === ')') {
+      result += ')';
+      i++;
+    } else if (ch === ' ') {
+      result += ' ';
+      i++;
+    } else {
+      // Start of a word — show first letter, underscores for rest
+      result += ch.toUpperCase();
+      i++;
+      while (i < title.length && title[i] !== ' ' && title[i] !== '(' && title[i] !== ')') {
+        result += '_';
+        i++;
+      }
+    }
+  }
+  return result;
 }
 
 // Hint penalties: hint index 0 = free, 1 = +2, 2 = +3, 3 = +4, 4 = +5
@@ -85,7 +107,7 @@ exports.handler = async (event) => {
         newTitleHintUsed = true;
       }
     } else if (hints_used === 3) {
-      // Hint 4: random — full artist name OR title with underscores/spaces
+      // Hint 4: random — full artist name OR title with word-initial letters + underscores
       const useArtist = Math.random() < 0.5;
       if (useArtist) {
         hint = `🎤 Artist: ${secret.artist}`;
