@@ -320,17 +320,16 @@ exports.handler = async (event) => {
       WHERE category = ${session.category}
     `;
 
-    // Check if the guess exists in a DIFFERENT category
+    // Check if the guess exists in a DIFFERENT category — no limit, check all songs
     let wrongCategoryMatch = null;
     const { entry: inCategory } = findGuessEntry(guess, allSongs);
     if (!inCategory) {
-      const otherMatches = await sql`
+      const otherSongs = await sql`
         SELECT title, artist, tags, year, mood, tempo
         FROM songs
         WHERE category != ${session.category}
-        LIMIT 500
       `;
-      const { entry: other, artistOnlyGuess } = findGuessEntry(guess, otherMatches);
+      const { entry: other, artistOnlyGuess } = findGuessEntry(guess, otherSongs);
       if (other && !artistOnlyGuess) {
         wrongCategoryMatch = other;
       }
