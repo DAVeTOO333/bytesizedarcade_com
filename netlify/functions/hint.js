@@ -26,6 +26,15 @@ function titleToBlanks(title) {
   return result;
 }
 
+// Returns the "starts with" display for a title — if it starts with '(', reveal '(X'
+function titleStartsWith(title) {
+  if (title[0] === '(') {
+    const next = title[1];
+    return next ? `(${next.toUpperCase()}` : '(';
+  }
+  return title[0].toUpperCase();
+}
+
 // Tags that restate the category the player already chose — never useful as hints
 const CATEGORY_RESTATE_TAGS = new Set([
   '80s alt', '80s alternative', '80s top 10', '80s hits',
@@ -96,14 +105,12 @@ exports.handler = async (event) => {
 
     if (hints_used === 0) {
       // Hint 1: most specific/interesting genre tag
-      // Filter out: category restatements, generic tags, and anything that contains the category id words
       const categoryWords = (secret.category || '').toLowerCase().replace(/_/g, ' ').split(' ').filter(w => w.length > 2);
 
       const bestTag = secret.tags.find(t => {
         const tl = t.toLowerCase();
         if (CATEGORY_RESTATE_TAGS.has(tl)) return false;
         if (GENERIC_TAGS.has(tl)) return false;
-        // Skip if tag is just a restatement of the category id words
         if (categoryWords.some(w => tl === w || tl === w + 's')) return false;
         return true;
       }) || null;
@@ -111,7 +118,6 @@ exports.handler = async (event) => {
       if (bestTag) {
         hint = `🎵 Genre: ${bestTag}`;
       } else {
-        // Fallback: year
         hint = `📅 Released: ${secret.year}`;
       }
     } else if (hints_used === 1) {
@@ -120,7 +126,7 @@ exports.handler = async (event) => {
         hint = `🎤 Artist starts with "${secret.artist[0].toUpperCase()}"`;
         newArtistHintUsed = true;
       } else {
-        hint = `📝 Song title starts with "${secret.title[0].toUpperCase()}"`;
+        hint = `📝 Song title starts with "${titleStartsWith(secret.title)}"`;
         newTitleHintUsed = true;
       }
     } else if (hints_used === 2) {
@@ -128,7 +134,7 @@ exports.handler = async (event) => {
         hint = `🎤 Artist starts with "${secret.artist[0].toUpperCase()}"`;
         newArtistHintUsed = true;
       } else {
-        hint = `📝 Song title starts with "${secret.title[0].toUpperCase()}"`;
+        hint = `📝 Song title starts with "${titleStartsWith(secret.title)}"`;
         newTitleHintUsed = true;
       }
     } else if (hints_used === 3) {
