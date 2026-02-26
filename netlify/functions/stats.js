@@ -28,12 +28,26 @@ exports.handler = async (event) => {
       ORDER BY plays DESC
     `;
 
+    // Win rates per category (only categories with 20+ games)
+    const winRates = await sql`
+      SELECT
+        category,
+        COUNT(*)::int AS total,
+        SUM(CASE WHEN solved = true THEN 1 ELSE 0 END)::int AS wins,
+        ROUND(SUM(CASE WHEN solved = true THEN 1 ELSE 0 END)::numeric / COUNT(*) * 100, 1) AS win_rate
+      FROM game_sessions
+      GROUP BY category
+      HAVING COUNT(*) >= 20
+      ORDER BY win_rate ASC
+    `;
+
     return {
       statusCode: 200,
       body: JSON.stringify({
         total_games: totals.total_games,
         all_time: allTime,
         last_24h: recent,
+        win_rates: winRates,
       }),
     };
   } catch (err) {
