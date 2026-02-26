@@ -294,7 +294,7 @@
         const isBrutal = !isNew && cat.id === brutalCategory;
         let badge = '';
         if (isHot) badge = ' <span class="hot-badge">\uD83D\uDD25</span>';
-        else if (isNew) badge = ' <span class="new-badge">\uD83C\uDD95</span>';
+        else if (isNew) badge = ' <span class="new-badge">\u2728</span>';
         else if (isBrutal) badge = ' <span class="brutal-badge">\uD83D\uDC80</span>';
         return '<button class="era-btn" onclick="startGame(\'' + cat.id + '\')">' + cat.label + badge + '</button>';
       }).join('');
