@@ -152,7 +152,7 @@
     <button class="era-btn" onclick="startGame('golden_oldies')">&#128251; GOLDEN OLDIES</button>
     <button class="era-btn" onclick="startGame('hippie_vibes')">&#9774;&#65039; HIPPIE VIBES</button>
     <button class="era-btn" onclick="startGame('classic_rock')">&#127928; CLASSIC ROCK</button>
-    <button class="era-btn" onclick="startGame('2000s_hits')">&#128142; 2000's HITS <span class="new-badge">&#127381;</span></button>
+    <button class="era-btn" onclick="startGame('2000s_hits')">&#128191; 2000's HITS</button>
   </div>
   <div class="locked-grid">
     <div class="locked-btn">&#128274; 70's HITS</div>
@@ -195,7 +195,10 @@
 </div>
 
 <script>
-  const NEWEST_CATEGORY = '2000s_hits';
+  // Launch dates for NEW badge (72-hour window)
+  const CATEGORY_LAUNCH_DATES = {
+    '2000s_hits': new Date('2026-02-26T00:00:00Z'),
+  };
 
   const ALL_CATEGORIES = [
     { id: '80s_top10',     label: "\uD83C\uDFB5 80'S TOP 10 HITS" },
@@ -208,7 +211,7 @@
     { id: 'golden_oldies', label: "\uD83D\uDCFB GOLDEN OLDIES" },
     { id: 'hippie_vibes',  label: "\u262E\uFE0F HIPPIE VIBES" },
     { id: 'classic_rock',  label: "\uD83C\uDFB8 CLASSIC ROCK" },
-    { id: '2000s_hits',    label: "\uD83D\uDC8E 2000'S HITS" },
+    { id: '2000s_hits',    label: "\uD83D\uDCBF 2000'S HITS" },
   ];
 
   const categoryLabels = {
@@ -222,7 +225,7 @@
     'golden_oldies': "\uD83D\uDCFB Golden Oldies",
     'hippie_vibes':  "\u262E\uFE0F Hippie Vibes",
     'classic_rock':  "\uD83C\uDFB8 Classic Rock",
-    '2000s_hits':    "\uD83D\uDC8E 2000's Hits",
+    '2000s_hits':    "\uD83D\uDCBF 2000's Hits",
   };
 
   let sessionId = null, songCount = 0, guesses = [], hintsUsed = 0, hintMessages = [];
@@ -257,20 +260,38 @@
         el.textContent = '\uD83D\uDD79\uFE0F ' + data.total_games.toLocaleString() + ' games played';
         el.style.opacity = '1';
       }
+
       const allTimeMap = {};
       (data.all_time || []).forEach(row => { allTimeMap[row.category] = row.plays; });
       const last24hMap = {};
       (data.last_24h || []).forEach(row => { last24hMap[row.category] = row.plays; });
+
+      // Hottest = most plays in last 24h
       let hottestCategory = null, hottestPlays = 0;
       Object.entries(last24hMap).forEach(([cat, plays]) => {
         if (plays > hottestPlays) { hottestPlays = plays; hottestCategory = cat; }
       });
+
+      // Brutal = lowest win rate among categories with 20+ plays
+      let brutalCategory = null, brutalWinRate = Infinity;
+      (data.win_rates || []).forEach(row => {
+        if (row.total >= 20 && parseFloat(row.win_rate) < brutalWinRate) {
+          brutalWinRate = parseFloat(row.win_rate);
+          brutalCategory = row.category;
+        }
+      });
+
+      // NEW = launched within last 72 hours
+      const now = Date.now();
+      const SEVENTY_TWO_HOURS = 72 * 60 * 60 * 1000;
+
       const sorted = [...ALL_CATEGORIES].sort((a, b) => (allTimeMap[b.id] || 0) - (allTimeMap[a.id] || 0));
       const list = document.getElementById('category-list');
       list.innerHTML = sorted.map(cat => {
         const isHot = cat.id === hottestCategory && hottestPlays > 0;
-        const isNew = cat.id === NEWEST_CATEGORY && !allTimeMap[cat.id];
-        const isBrutal = cat.id === NEWEST_CATEGORY && (allTimeMap[cat.id] || 0) > 0 && (allTimeMap[cat.id] || 0) < 10;
+        const launchDate = CATEGORY_LAUNCH_DATES[cat.id];
+        const isNew = launchDate && (now - launchDate.getTime() < SEVENTY_TWO_HOURS);
+        const isBrutal = !isNew && cat.id === brutalCategory;
         let badge = '';
         if (isHot) badge = ' <span class="hot-badge">\uD83D\uDD25</span>';
         else if (isNew) badge = ' <span class="new-badge">\uD83C\uDD95</span>';
