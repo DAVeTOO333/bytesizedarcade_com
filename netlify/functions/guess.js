@@ -115,6 +115,18 @@ const WRONG_CATEGORY_HINTS = [
   "Good taste, wrong category though",
   "That song exists — just not in this category",
   "Solid choice, but check the category!",
+  "You know your music! Different category though",
+  "That's a legit song, just filed elsewhere",
+  "Close — but that belongs in another category",
+  "Wrong era for this category!",
+  "That song's in the database, wrong drawer though",
+  "Banger, but wrong category",
+  "Certified hit — wrong category bucket",
+  "You're in the wrong room with that one",
+  "That song's real, just living in a different category",
+  "Good guess, different musical neighborhood",
+  "That's definitely a song — wrong category though",
+  "Nice, but that one's from a different pile",
 ];
 
 function scoreSimilarity(secret, guess, allSongs, wrongCategoryMatch) {
@@ -138,14 +150,13 @@ function scoreSimilarity(secret, guess, allSongs, wrongCategoryMatch) {
   // Song is in the DB but in a different category
   if (!guessEntry && wrongCategoryMatch) {
     const hint = WRONG_CATEGORY_HINTS[Math.floor(Math.random() * WRONG_CATEGORY_HINTS.length)];
-    // Score it like a known song with some tag overlap
     const sharedTags = (wrongCategoryMatch.tags || []).filter(t => (secret.tags || []).includes(t));
     const familyOverlap = countGenreFamilyOverlap(wrongCategoryMatch.tags || [], secret.tags || []);
     const yearDiff = Math.abs(wrongCategoryMatch.year - secret.year);
     let closeness = 5 + sharedTags.length * 6 + familyOverlap * 4;
     if (yearDiff <= 2) closeness += 8;
     else if (yearDiff <= 5) closeness += 4;
-    closeness = Math.min(closeness, 50); // cap — they're not in the right ballpark category-wise
+    closeness = Math.min(closeness, 50);
 
     let heat;
     if (closeness >= 40) heat = "♨️ WARM";
