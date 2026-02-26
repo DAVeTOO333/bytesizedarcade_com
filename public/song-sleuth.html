@@ -51,7 +51,7 @@
       transition: all 0.2s; margin-bottom: 8px; text-align: center;
     }
     .era-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(255,100,50,0.3); border-color: #ff6633; }
-    .hot-badge { display: inline-block; animation: pulse 1.5s ease-in-out infinite; }
+    .hot-badge, .new-badge, .brutal-badge { display: inline-block; animation: pulse 1.5s ease-in-out infinite; }
     @keyframes pulse {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.3); }
@@ -152,12 +152,13 @@
     <button class="era-btn" onclick="startGame('golden_oldies')">&#128251; GOLDEN OLDIES</button>
     <button class="era-btn" onclick="startGame('hippie_vibes')">&#9774;&#65039; HIPPIE VIBES</button>
     <button class="era-btn" onclick="startGame('classic_rock')">&#127928; CLASSIC ROCK</button>
+    <button class="era-btn" onclick="startGame('2000s_hits')">&#128142; 2000's HITS <span class="new-badge">&#127381;</span></button>
   </div>
   <div class="locked-grid">
     <div class="locked-btn">&#128274; 70's HITS</div>
-    <div class="locked-btn">&#128274; 2000's HITS</div>
     <div class="locked-btn">&#128274; COUNTRY</div>
     <div class="locked-btn">&#128274; ALL CATEGORIES</div>
+    <div class="locked-btn">&#128274; MORE SOON</div>
   </div>
   <div class="coming-soon">More categories coming soon...</div>
   <div id="play-counter" style="margin-top:12px;font-size:13px;color:#6666aa;letter-spacing:1px;opacity:0;transition:opacity 0.5s ease;"></div>
@@ -194,6 +195,8 @@
 </div>
 
 <script>
+  const NEWEST_CATEGORY = '2000s_hits';
+
   const ALL_CATEGORIES = [
     { id: '80s_top10',     label: "\uD83C\uDFB5 80'S TOP 10 HITS" },
     { id: '80s_alt',       label: "\uD83D\uDCFC 80'S ALT BANDS" },
@@ -205,6 +208,7 @@
     { id: 'golden_oldies', label: "\uD83D\uDCFB GOLDEN OLDIES" },
     { id: 'hippie_vibes',  label: "\u262E\uFE0F HIPPIE VIBES" },
     { id: 'classic_rock',  label: "\uD83C\uDFB8 CLASSIC ROCK" },
+    { id: '2000s_hits',    label: "\uD83D\uDC8E 2000'S HITS" },
   ];
 
   const categoryLabels = {
@@ -218,6 +222,7 @@
     'golden_oldies': "\uD83D\uDCFB Golden Oldies",
     'hippie_vibes':  "\u262E\uFE0F Hippie Vibes",
     'classic_rock':  "\uD83C\uDFB8 Classic Rock",
+    '2000s_hits':    "\uD83D\uDC8E 2000's Hits",
   };
 
   let sessionId = null, songCount = 0, guesses = [], hintsUsed = 0, hintMessages = [];
@@ -264,7 +269,12 @@
       const list = document.getElementById('category-list');
       list.innerHTML = sorted.map(cat => {
         const isHot = cat.id === hottestCategory && hottestPlays > 0;
-        const badge = isHot ? ' <span class="hot-badge">\uD83D\uDD25</span>' : '';
+        const isNew = cat.id === NEWEST_CATEGORY && !allTimeMap[cat.id];
+        const isBrutal = cat.id === NEWEST_CATEGORY && (allTimeMap[cat.id] || 0) > 0 && (allTimeMap[cat.id] || 0) < 10;
+        let badge = '';
+        if (isHot) badge = ' <span class="hot-badge">\uD83D\uDD25</span>';
+        else if (isNew) badge = ' <span class="new-badge">\uD83C\uDD95</span>';
+        else if (isBrutal) badge = ' <span class="brutal-badge">\uD83D\uDC80</span>';
         return '<button class="era-btn" onclick="startGame(\'' + cat.id + '\')">' + cat.label + badge + '</button>';
       }).join('');
     } catch (e) {}
