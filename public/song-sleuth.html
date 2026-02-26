@@ -1,480 +1,463 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-      <title>Song Sleuth - Bytesized Arcade</title>
-    <link href="https://fonts.googleapis.com/css2?family=Righteous&display=swap" rel="stylesheet">
-    <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          html {
-                  height: 100%;
-                  overflow-x: hidden;
-          }
-          body {
-                  min-height: 100%;
-                  height: 100%;
-                  background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2a 50%, #0a0a1a 100%);
-                  font-family: 'Segoe UI', system-ui, sans-serif;
-                  color: #fff;
-                  display: flex;
-                  flex-direction: column;
-                  overflow-x: hidden;
-                  -webkit-overflow-scrolling: touch;
-          }
-          @keyframes shimmer {
-                  0% { background-position: -200% center; }
-                  100% { background-position: 200% center; }
-          }
-          #title-screen {
-                  flex: 1; display: flex; flex-direction: column;
-                  align-items: center; justify-content: center; padding: 20px;
-          }
-          .music-notes { font-size: 14px; letter-spacing: 6px; color: #ff6633; margin-bottom: 12px; font-weight: 300; }
-          .game-title {
-                  font-family: 'Righteous', cursive; font-size: 48px;
-                  background: linear-gradient(90deg, #ff6633, #ffaa33, #ff6633, #ffaa33);
-                  background-size: 200% auto; -webkit-background-clip: text;
-                  -webkit-text-fill-color: transparent; animation: shimmer 3s linear infinite; margin-bottom: 8px;
-          }
-          .subtitle {
-                  font-size: 12px; color: #8888aa; font-weight: 300; letter-spacing: 2px;
-                  text-align: center; line-height: 1.8;
-          }
-          .description { font-size: 13px; color: #aaaacc; margin: 20px 0; line-height: 1.6; max-width: 400px; text-align: center; }
-          .era-label { font-size: 11px; letter-spacing: 4px; color: #ff6633; margin-bottom: 16px; font-weight: 600; }
-          .era-btn {
-                  width: 100%; max-width: 400px; padding: 16px 20px;
-                  background: rgba(255,102,51,0.08); border: 1px solid #ff663340;
-                  border-radius: 8px; color: #ffaa33; font-size: 18px;
-                  font-family: 'Righteous', cursive; cursor: pointer;
-                  transition: all 0.2s; margin-bottom: 8px; text-align: center;
-          }
-          .era-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(255,100,50,0.3); border-color: #ff6633; }
-          .hot-badge, .new-badge, .brutal-badge { display: inline-block; animation: pulse 1.5s ease-in-out infinite; }
-          @keyframes pulse {
-                  0%, 100% { transform: scale(1); }
-                  50% { transform: scale(1.3); }
-          }
-          .locked-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; max-width: 400px; width: 100%; }
-          .locked-btn {
-                  padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid #ffffff10;
-                  border-radius: 8px; color: #666; font-size: 11px; font-family: 'Righteous', cursive;
-          }
-          .coming-soon { font-size: 11px; color: #555; margin-top: 16px; }
-          .site-name { margin-top: 40px; font-size: 11px; color: #444; }
-          #category-list { width: 100%; max-width: 400px; display: flex; flex-direction: column; }
-          #game-screen { display: none; flex: 1; flex-direction: column; padding: 16px; }
-          .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-          .header-title { font-family: 'Righteous', cursive; font-size: 20px; color: #ff6633; cursor: pointer; }
-          .header-info { font-size: 12px; color: #8888aa; }
-          .header-btn {
-                  background: rgba(255,255,255,0.05); border: 1px solid #333; border-radius: 6px;
-                  color: #888; font-size: 11px; padding: 6px 12px; cursor: pointer;
-          }
-          .input-row { display: flex; gap: 8px; margin-bottom: 8px; }
-          .guess-input {
-                  flex: 1; padding: 12px 16px; background: rgba(255,255,255,0.05);
-                  border: 1px solid #333; border-radius: 8px; color: #eee; font-size: 15px; outline: none;
-          }
-          .guess-input:focus { border-color: #ff663380; }
-          .guess-btn {
-                  padding: 12px 20px; background: rgba(255,102,51,0.2); border: 1px solid #ff6633;
-                  border-radius: 8px; color: #ff6633; font-size: 14px;
-                  font-family: 'Righteous', cursive; cursor: pointer; min-width: 80px;
-          }
-          .guess-btn:disabled { background: #333; border-color: #444; color: #666; cursor: default; }
-          .info-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
-          .db-count { font-size: 11px; color: #555; }
-          .hint-btn { border-radius: 6px; font-size: 11px; padding: 4px 10px; cursor: pointer; border: 1px solid; }
-          .hint-btn.available { background: rgba(255,170,51,0.1); border-color: #ffaa3340; color: #ffaa33; }
-          .hint-btn.free { background: rgba(100,220,100,0.1); border-color: #64dc6440; color: #64dc64; }
-          .hint-btn.locked { background: rgba(255,255,255,0.03); border-color: #333; color: #555; cursor: default; }
-          .hint-btn.all-used { display: none; }
-          .hints-box {
-                  margin-top: 8px; padding: 10px; background: rgba(255,170,51,0.06);
-                  border: 1px solid #ffaa3320; border-radius: 8px;
-          }
-          .hint-msg { font-size: 12px; color: #ffaa33; margin-bottom: 4px; }
-          .hint-msg:last-child { margin-bottom: 0; }
-          .result-box { border-radius: 10px; padding: 20px; text-align: center; margin-bottom: 16px; }
-          .result-box.win { background: rgba(255,34,34,0.1); border: 1px solid #ff333360; }
-          .result-emoji { font-size: 24px; margin-bottom: 8px; }
-          .result-title { font-family: 'Righteous', cursive; font-size: 18px; color: #ff6633; margin-bottom: 8px; }
-          .result-song { font-size: 16px; color: #ffaa33; margin-bottom: 8px; }
-          .result-stats { font-size: 13px; color: #8888aa; }
-          .play-again-btn {
-                  margin-top: 12px; background: rgba(255,102,51,0.15); border: 1px solid #ff6633;
-                  border-radius: 6px; color: #ff6633; font-size: 14px;
-                  font-family: 'Righteous', cursive; padding: 8px 24px; cursor: pointer;
-          }
-          .guesses-container { flex: 1; overflow-y: auto; }
-          .latest-label, .rankings-label { font-size: 9px; color: #666; margin-bottom: 4px; letter-spacing: 1px; }
-          .latest-guess {
-                  margin-bottom: 12px; background: rgba(255,255,255,0.06); border-radius: 8px;
-                  padding: 10px 14px; border-left: 3px solid;
-          }
-          .guess-row {
-                  margin-bottom: 6px; background: rgba(255,255,255,0.03); border-radius: 8px;
-                  padding: 10px 14px; border: 1px solid transparent;
-          }
-          .guess-row.winner { border-color: #ff333380; }
-          .guess-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-          .guess-text { color: #ddd; font-size: 14px; }
-          .guess-heat { font-size: 12px; font-family: 'Righteous', cursive; font-weight: 700; white-space: nowrap; margin-left: 8px; }
-          .score-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
-          .score-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
-          .guess-hint { font-size: 11px; color: #777; font-style: italic; margin-top: 4px; }
-          .empty-state { text-align: center; padding: 40px; color: #444; }
-          .empty-emoji { font-size: 32px; margin-bottom: 12px; }
-          .empty-text { font-size: 14px; margin-bottom: 8px; }
-          .empty-sub { font-size: 12px; }
-        </style>
-  </head>
-  <body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Song Sleuth - Bytesized Arcade</title>
+  <link href="https://fonts.googleapis.com/css2?family=Righteous&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html {
+      height: 100%;
+      overflow-x: hidden;
+    }
+    body {
+      min-height: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2a 50%, #0a0a1a 100%);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    #title-screen {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .music-notes { font-size: 14px; letter-spacing: 6px; color: #ff6633; margin-bottom: 12px; font-weight: 300; }
+    .game-title {
+      font-family: 'Righteous', cursive; font-size: 48px;
+      background: linear-gradient(90deg, #ff6633, #ffaa33, #ff6633, #ffaa33);
+      background-size: 200% auto; -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent; animation: shimmer 3s linear infinite; margin-bottom: 8px;
+    }
+    .subtitle {
+      font-size: 12px; color: #8888aa; font-weight: 300; letter-spacing: 2px;
+      text-align: center; line-height: 1.8;
+    }
+    .description { font-size: 13px; color: #aaaacc; margin: 20px 0; line-height: 1.6; max-width: 400px; text-align: center; }
+    .era-label { font-size: 11px; letter-spacing: 4px; color: #ff6633; margin-bottom: 16px; font-weight: 600; }
+    .era-btn {
+      width: 100%; max-width: 400px; padding: 16px 20px;
+      background: rgba(255,102,51,0.08); border: 1px solid #ff663340;
+      border-radius: 8px; color: #ffaa33; font-size: 18px;
+      font-family: 'Righteous', cursive; cursor: pointer;
+      transition: all 0.2s; margin-bottom: 8px; text-align: center;
+    }
+    .era-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(255,100,50,0.3); border-color: #ff6633; }
+    .hot-badge { display: inline-block; animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.3); }
+    }
+    .locked-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; max-width: 400px; width: 100%; }
+    .locked-btn {
+      padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid #ffffff10;
+      border-radius: 8px; color: #666; font-size: 11px; font-family: 'Righteous', cursive;
+    }
+    .coming-soon { font-size: 11px; color: #555; margin-top: 16px; }
+    .site-name { margin-top: 40px; font-size: 11px; color: #444; }
+    #category-list { width: 100%; max-width: 400px; display: flex; flex-direction: column; }
+    #game-screen { display: none; flex: 1; flex-direction: column; padding: 16px; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .header-title { font-family: 'Righteous', cursive; font-size: 20px; color: #ff6633; cursor: pointer; }
+    .header-info { font-size: 12px; color: #8888aa; }
+    .header-btn {
+      background: rgba(255,255,255,0.05); border: 1px solid #333; border-radius: 6px;
+      color: #888; font-size: 11px; padding: 6px 12px; cursor: pointer;
+    }
+    .input-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .guess-input {
+      flex: 1; padding: 12px 16px; background: rgba(255,255,255,0.05);
+      border: 1px solid #333; border-radius: 8px; color: #eee; font-size: 15px; outline: none;
+    }
+    .guess-input:focus { border-color: #ff663380; }
+    .guess-btn {
+      padding: 12px 20px; background: rgba(255,102,51,0.2); border: 1px solid #ff6633;
+      border-radius: 8px; color: #ff6633; font-size: 14px;
+      font-family: 'Righteous', cursive; cursor: pointer; min-width: 80px;
+    }
+    .guess-btn:disabled { background: #333; border-color: #444; color: #666; cursor: default; }
+    .info-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+    .db-count { font-size: 11px; color: #555; }
+    .hint-btn { border-radius: 6px; font-size: 11px; padding: 4px 10px; cursor: pointer; border: 1px solid; }
+    .hint-btn.available { background: rgba(255,170,51,0.1); border-color: #ffaa3340; color: #ffaa33; }
+    .hint-btn.free { background: rgba(100,220,100,0.1); border-color: #64dc6440; color: #64dc64; }
+    .hint-btn.locked { background: rgba(255,255,255,0.03); border-color: #333; color: #555; cursor: default; }
+    .hint-btn.all-used { display: none; }
+    .hints-box {
+      margin-top: 8px; padding: 10px; background: rgba(255,170,51,0.06);
+      border: 1px solid #ffaa3320; border-radius: 8px;
+    }
+    .hint-msg { font-size: 12px; color: #ffaa33; margin-bottom: 4px; }
+    .hint-msg:last-child { margin-bottom: 0; }
+    .result-box { border-radius: 10px; padding: 20px; text-align: center; margin-bottom: 16px; }
+    .result-box.win { background: rgba(255,34,34,0.1); border: 1px solid #ff333360; }
+    .result-emoji { font-size: 24px; margin-bottom: 8px; }
+    .result-title { font-family: 'Righteous', cursive; font-size: 18px; color: #ff6633; margin-bottom: 8px; }
+    .result-song { font-size: 16px; color: #ffaa33; margin-bottom: 8px; }
+    .result-stats { font-size: 13px; color: #8888aa; }
+    .play-again-btn {
+      margin-top: 12px; background: rgba(255,102,51,0.15); border: 1px solid #ff6633;
+      border-radius: 6px; color: #ff6633; font-size: 14px;
+      font-family: 'Righteous', cursive; padding: 8px 24px; cursor: pointer;
+    }
+    .guesses-container { flex: 1; overflow-y: auto; }
+    .latest-label, .rankings-label { font-size: 9px; color: #666; margin-bottom: 4px; letter-spacing: 1px; }
+    .latest-guess {
+      margin-bottom: 12px; background: rgba(255,255,255,0.06); border-radius: 8px;
+      padding: 10px 14px; border-left: 3px solid;
+    }
+    .guess-row {
+      margin-bottom: 6px; background: rgba(255,255,255,0.03); border-radius: 8px;
+      padding: 10px 14px; border: 1px solid transparent;
+    }
+    .guess-row.winner { border-color: #ff333380; }
+    .guess-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .guess-text { color: #ddd; font-size: 14px; }
+    .guess-heat { font-size: 12px; font-family: 'Righteous', cursive; font-weight: 700; white-space: nowrap; margin-left: 8px; }
+    .score-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
+    .score-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+    .guess-hint { font-size: 11px; color: #777; font-style: italic; margin-top: 4px; }
+    .empty-state { text-align: center; padding: 40px; color: #444; }
+    .empty-emoji { font-size: 32px; margin-bottom: 12px; }
+    .empty-text { font-size: 14px; margin-bottom: 8px; }
+    .empty-sub { font-size: 12px; }
+  </style>
+</head>
+<body>
 
-    <div id="title-screen">
-        <div class="music-notes">&#9834; &#9835; &#9834;</div>div>
-        <div class="game-title">SONG SLEUTH</div>div>
-        <div class="subtitle">GUESS THE SONG &middot; GET WARMER<br>FIND THE HIT</div>div>
-        <div class="description">
-              A secret song is chosen. Type song titles and find out how close you are. Use the clues to zero in on the answer.
-        </div>div>
-        <div class="era-label">CHOOSE YOUR CATEGORY</div>div>
-        <div id="category-list">
-              <button class="era-btn" onclick="startGame('80s_top10')">&#127925; 80's TOP 10 HITS</button>button>
-              <button class="era-btn" onclick="startGame('80s_alt')">&#128252; 80's ALT BANDS</button>button>
-              <button class="era-btn" onclick="startGame('90s_rap')">&#127908; 90's RAP &amp; HIP HOP</button>button>
-              <button class="era-btn" onclick="startGame('90s_alt')">&#128192; 90's ALTERNATIVE</button>button>
-              <button class="era-btn" onclick="startGame('punk')">&#129399; PUNK &amp; STUFF</button>button>
-              <button class="era-btn" onclick="startGame('vocaloid')">&#127911; VOCALOID</button>button>
-              <button class="era-btn" onclick="startGame('yacht_rock')">&#9973; YACHT ROCK</button>button>
-              <button class="era-btn" onclick="startGame('golden_oldies')">&#128251; GOLDEN OLDIES</button>button>
-              <button class="era-btn" onclick="startGame('hippie_vibes')">&#9774;&#65039; HIPPIE VIBES</button>button>
-              <button class="era-btn" onclick="startGame('classic_rock')">&#127928; CLASSIC ROCK</button>button>
-              <button class="era-btn" onclick="startGame('2000s_hits')">&#128191; 2000's HITS</button>button>
-        </div>div>
-        <div class="locked-grid">
-              <div class="locked-btn">&#128274; 70's HITS</div>div>
-              <div class="locked-btn">&#128274; COUNTRY</div>div>
-              <div class="locked-btn">&#128274; R&amp;B / SOUL</div>div>
-              <div class="locked-btn">&#128274; ALL CATEGORIES</div>div>
-        </div>div>
-        <div class="coming-soon">More categories coming soon...</div>div>
-        <div id="play-counter" style="margin-top:12px;font-size:13px;color:#6666aa;letter-spacing:1px;opacity:0;transition:opacity 0.5s ease;"></div>div>
-        <div class="site-name">BYTESIZEDARCADE.COM</div>div>
-    </div>div>
+<div id="title-screen">
+  <div class="music-notes">&#9834; &#9835; &#9834;</div>
+  <div class="game-title">SONG SLEUTH</div>
+  <div class="subtitle">GUESS THE SONG &middot; GET WARMER<br>FIND THE HIT</div>
+  <div class="description">
+    A secret song is chosen. Type song titles and find out how close you are. Use the clues to zero in on the answer.
+  </div>
+  <div class="era-label">CHOOSE YOUR CATEGORY</div>
+  <div id="category-list">
+    <button class="era-btn" onclick="startGame('80s_top10')">&#127925; 80's TOP 10 HITS</button>
+    <button class="era-btn" onclick="startGame('80s_alt')">&#128252; 80's ALT BANDS</button>
+    <button class="era-btn" onclick="startGame('90s_rap')">&#127908; 90's RAP &amp; HIP HOP</button>
+    <button class="era-btn" onclick="startGame('90s_alt')">&#128192; 90's ALTERNATIVE</button>
+    <button class="era-btn" onclick="startGame('punk')">&#129399; PUNK &amp; STUFF</button>
+    <button class="era-btn" onclick="startGame('vocaloid')">&#127911; VOCALOID</button>
+    <button class="era-btn" onclick="startGame('yacht_rock')">&#9973; YACHT ROCK</button>
+    <button class="era-btn" onclick="startGame('golden_oldies')">&#128251; GOLDEN OLDIES</button>
+    <button class="era-btn" onclick="startGame('hippie_vibes')">&#9774;&#65039; HIPPIE VIBES</button>
+    <button class="era-btn" onclick="startGame('classic_rock')">&#127928; CLASSIC ROCK</button>
+  </div>
+  <div class="locked-grid">
+    <div class="locked-btn">&#128274; 70's HITS</div>
+    <div class="locked-btn">&#128274; 2000's HITS</div>
+    <div class="locked-btn">&#128274; COUNTRY</div>
+    <div class="locked-btn">&#128274; ALL CATEGORIES</div>
+  </div>
+  <div class="coming-soon">More categories coming soon...</div>
+  <div id="play-counter" style="margin-top:12px;font-size:13px;color:#6666aa;letter-spacing:1px;opacity:0;transition:opacity 0.5s ease;"></div>
+  <div class="site-name">BYTESIZEDARCADE.COM</div>
+</div>
 
-    <div id="game-screen">
-        <div class="header">
-              <div class="header-title" onclick="showTitle()">SONG SLEUTH</div>div>
-              <div style="display:flex;align-items:center;gap:12px;">
-                      <span class="header-info" id="header-info">&#127925; 80's Top 10 &middot; Guesses: 0</span>span>
-                      <button class="header-btn" id="action-btn" onclick="handleAction()">GIVE UP</button>button>
-              </div>div>
-        </div>div>
-        <div id="input-area">
-              <div class="input-row">
-                      <input type="text" class="guess-input" id="guess-input" placeholder="Type a song title..." onkeydown="if(event.key==='Enter')submitGuess()">
-                      <button class="guess-btn" id="guess-btn" onclick="submitGuess()">GUESS</button>button>
-              </div>div>
-              <div class="info-row">
-                      <span class="db-count" id="db-count"></span>span>
-                      <button class="hint-btn locked" id="hint-btn" onclick="requestHint()">&#128161; HINT (guess first)</button>button>
-              </div>div>
-              <div class="hints-box" id="hints-box" style="display:none"></div>div>
-        </div>div>
-        <div id="result-area"></div>div>
-        <div class="guesses-container" id="guesses-container">
-              <div class="empty-state" id="empty-state">
-                      <div class="empty-emoji">&#127925;</div>div>
-                      <div class="empty-text">A secret song has been chosen</div>div>
-                      <div class="empty-sub" id="empty-sub"></div>div>
-              </div>div>
-        </div>div>
-    </div>div>
+<div id="game-screen">
+  <div class="header">
+    <div class="header-title" onclick="showTitle()">SONG SLEUTH</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="header-info" id="header-info">&#127925; 80's Top 10 &middot; Guesses: 0</span>
+      <button class="header-btn" id="action-btn" onclick="handleAction()">GIVE UP</button>
+    </div>
+  </div>
+  <div id="input-area">
+    <div class="input-row">
+      <input type="text" class="guess-input" id="guess-input" placeholder="Type a song title..." onkeydown="if(event.key==='Enter')submitGuess()">
+      <button class="guess-btn" id="guess-btn" onclick="submitGuess()">GUESS</button>
+    </div>
+    <div class="info-row">
+      <span class="db-count" id="db-count"></span>
+      <button class="hint-btn locked" id="hint-btn" onclick="requestHint()">&#128161; HINT (guess first)</button>
+    </div>
+    <div class="hints-box" id="hints-box" style="display:none"></div>
+  </div>
+  <div id="result-area"></div>
+  <div class="guesses-container" id="guesses-container">
+    <div class="empty-state" id="empty-state">
+      <div class="empty-emoji">&#127925;</div>
+      <div class="empty-text">A secret song has been chosen</div>
+      <div class="empty-sub" id="empty-sub"></div>
+    </div>
+  </div>
+</div>
 
-    <script>
-        const ALL_CATEGORIES = [
-          { id: '80s_top10',     label: "\uD83C\uDFB5 80'S TOP 10 HITS" },
-          { id: '80s_alt',       label: "\uD83D\uDCFC 80'S ALT BANDS" },
-          { id: '90s_rap',       label: "\uD83C\uDFA4 90'S RAP & HIP HOP" },
-          { id: '90s_alt',       label: "\uD83D\uDCC0 90'S ALTERNATIVE" },
-          { id: 'punk',          label: "\uD83E\uDDF7 PUNK & STUFF" },
-          { id: 'vocaloid',      label: "\uD83C\uDFA7 VOCALOID" },
-          { id: 'yacht_rock',    label: "\u26F5 YACHT ROCK" },
-          { id: 'golden_oldies', label: "\uD83D\uDCFB GOLDEN OLDIES" },
-          { id: 'hippie_vibes',  label: "\u262E\uFE0F HIPPIE VIBES" },
-          { id: 'classic_rock',  label: "\uD83C\uDFB8 CLASSIC ROCK" },
-          { id: '2000s_hits',    label: "\uD83D\uDCBF 2000'S HITS" },
-            ];
+<script>
+  const ALL_CATEGORIES = [
+    { id: '80s_top10',     label: "\uD83C\uDFB5 80'S TOP 10 HITS" },
+    { id: '80s_alt',       label: "\uD83D\uDCFC 80'S ALT BANDS" },
+    { id: '90s_rap',       label: "\uD83C\uDFA4 90'S RAP & HIP HOP" },
+    { id: '90s_alt',       label: "\uD83D\uDCC0 90'S ALTERNATIVE" },
+    { id: 'punk',          label: "\uD83E\uDDF7 PUNK & STUFF" },
+    { id: 'vocaloid',      label: "\uD83C\uDFA7 VOCALOID" },
+    { id: 'yacht_rock',    label: "\u26F5 YACHT ROCK" },
+    { id: 'golden_oldies', label: "\uD83D\uDCFB GOLDEN OLDIES" },
+    { id: 'hippie_vibes',  label: "\u262E\uFE0F HIPPIE VIBES" },
+    { id: 'classic_rock',  label: "\uD83C\uDFB8 CLASSIC ROCK" },
+  ];
 
-        const categoryLabels = {
-              '80s_top10':     "\uD83C\uDFB5 80's Top 10",
-              '80s_alt':       "\uD83D\uDCFC 80's Alt Bands",
-              '90s_rap':       "\uD83C\uDFA4 90's Rap & Hip Hop",
-              '90s_alt':       "\uD83D\uDCC0 90's Alternative",
-              'punk':          "\uD83E\uDDF7 Punk",
-              'vocaloid':      "\uD83C\uDFA7 Vocaloid",
-              'yacht_rock':    "\u26F5 Yacht Rock",
-              'golden_oldies': "\uD83D\uDCFB Golden Oldies",
-              'hippie_vibes':  "\u262E\uFE0F Hippie Vibes",
-              'classic_rock':  "\uD83C\uDFB8 Classic Rock",
-              '2000s_hits':    "\uD83D\uDCBF 2000's Hits",
-        };
+  const categoryLabels = {
+    '80s_top10':     "\uD83C\uDFB5 80's Top 10",
+    '80s_alt':       "\uD83D\uDCFC 80's Alt Bands",
+    '90s_rap':       "\uD83C\uDFA4 90's Rap & Hip Hop",
+    '90s_alt':       "\uD83D\uDCC0 90's Alternative",
+    'punk':          "\uD83E\uDDF7 Punk",
+    'vocaloid':      "\uD83C\uDFA7 Vocaloid",
+    'yacht_rock':    "\u26F5 Yacht Rock",
+    'golden_oldies': "\uD83D\uDCFB Golden Oldies",
+    'hippie_vibes':  "\u262E\uFE0F Hippie Vibes",
+    'classic_rock':  "\uD83C\uDFB8 Classic Rock",
+  };
 
-        // Update this whenever a new category is added
-        const NEWEST_CATEGORY = '2000s_hits';
+  let sessionId = null, songCount = 0, guesses = [], hintsUsed = 0, hintMessages = [];
+  let hintPenaltyTotal = 0, artistHintUsed = false, titleHintUsed = false;
+  let fullArtistUsed = false, fullTitleUsed = false;
+  let gameWon = false, revealSecret = false, currentCategory = '80s_top10';
+  const HINT_PENALTIES = [0, 2, 3, 4, 5];
 
-        let sessionId = null, songCount = 0, guesses = [], hintsUsed = 0, hintMessages = [];
-        let hintPenaltyTotal = 0, artistHintUsed = false, titleHintUsed = false;
-        let fullArtistUsed = false, fullTitleUsed = false;
-        let gameWon = false, revealSecret = false, currentCategory = '80s_top10';
-        const HINT_PENALTIES = [0, 2, 3, 4, 5];
+  function getHeatColor(heat) {
+    if (!heat) return "#4488ff";
+    if (heat.includes("ON FIRE")) return "#ff2222";
+    if (heat.includes("HOT")) return "#ff6633";
+    if (heat.includes("WARM")) return "#ffaa33";
+    if (heat.includes("LUKEWARM")) return "#ffff33";
+    if (heat.includes("COOL")) return "#66ffff";
+    return "#4488ff";
+  }
 
-        function getHeatColor(heat) {
-              if (!heat) return "#4488ff";
-              if (heat.includes("ON FIRE")) return "#ff2222";
-              if (heat.includes("HOT")) return "#ff6633";
-              if (heat.includes("WARM")) return "#ffaa33";
-              if (heat.includes("LUKEWARM")) return "#ffff33";
-              if (heat.includes("COOL")) return "#66ffff";
-              return "#4488ff";
-        }
+  function showTitle() {
+    window.scrollTo(0, 0);
+    document.getElementById('title-screen').style.display = 'flex';
+    document.getElementById('game-screen').style.display = 'none';
+    loadStats();
+  }
 
-        function showTitle() {
-              window.scrollTo(0, 0);
-              document.getElementById('title-screen').style.display = 'flex';
-              document.getElementById('game-screen').style.display = 'none';
-              loadStats();
-        }
+  async function loadStats() {
+    try {
+      const res = await fetch('/.netlify/functions/stats');
+      const data = await res.json();
+      if (data.total_games) {
+        const el = document.getElementById('play-counter');
+        el.textContent = '\uD83D\uDD79\uFE0F ' + data.total_games.toLocaleString() + ' games played';
+        el.style.opacity = '1';
+      }
+      const allTimeMap = {};
+      (data.all_time || []).forEach(row => { allTimeMap[row.category] = row.plays; });
+      const last24hMap = {};
+      (data.last_24h || []).forEach(row => { last24hMap[row.category] = row.plays; });
+      let hottestCategory = null, hottestPlays = 0;
+      Object.entries(last24hMap).forEach(([cat, plays]) => {
+        if (plays > hottestPlays) { hottestPlays = plays; hottestCategory = cat; }
+      });
+      const sorted = [...ALL_CATEGORIES].sort((a, b) => (allTimeMap[b.id] || 0) - (allTimeMap[a.id] || 0));
+      const list = document.getElementById('category-list');
+      list.innerHTML = sorted.map(cat => {
+        const isHot = cat.id === hottestCategory && hottestPlays > 0;
+        const badge = isHot ? ' <span class="hot-badge">\uD83D\uDD25</span>' : '';
+        return '<button class="era-btn" onclick="startGame(\'' + cat.id + '\')">' + cat.label + badge + '</button>';
+      }).join('');
+    } catch (e) {}
+  }
 
-        async function loadStats() {
-              try {
-                      const res = await fetch('/.netlify/functions/stats');
-                      const data = await res.json();
-                      if (data.total_games) {
-                                const el = document.getElementById('play-counter');
-                                el.textContent = '\uD83D\uDD79\uFE0F ' + data.total_games.toLocaleString() + ' games played';
-                                el.style.opacity = '1';
-                      }
-                      const allTimeMap = {};
-                      (data.all_time || []).forEach(row => { allTimeMap[row.category] = row.plays; });
-                      const last24hMap = {};
-                      (data.last_24h || []).forEach(row => { last24hMap[row.category] = row.plays; });
+  loadStats();
 
-                      // Hottest = most plays in last 24h
-                      let hottestCategory = null, hottestPlays = 0;
-                      Object.entries(last24hMap).forEach(([cat, plays]) => {
-                                if (plays > hottestPlays) { hottestPlays = plays; hottestCategory = cat; }
-                      });
+  async function startGame(category) {
+    try {
+      sessionId = null; guesses = []; hintsUsed = 0; hintMessages = []; hintPenaltyTotal = 0;
+      artistHintUsed = false; titleHintUsed = false; fullArtistUsed = false; fullTitleUsed = false;
+      gameWon = false; revealSecret = false; currentCategory = category;
+      document.getElementById('header-info').textContent = (categoryLabels[category] || category) + ' \u00b7 Guesses: 0';
+      document.getElementById('hints-box').style.display = 'none';
+      document.getElementById('hints-box').innerHTML = '';
+      document.getElementById('result-area').innerHTML = '';
+      document.getElementById('action-btn').textContent = 'GIVE UP';
+      updateHintButton();
+      const res = await fetch('/.netlify/functions/start-game', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      sessionId = data.session_id; songCount = data.song_count; currentCategory = category;
+      document.getElementById('title-screen').style.display = 'none';
+      document.getElementById('game-screen').style.display = 'flex';
+      document.getElementById('input-area').style.display = 'block';
+      document.getElementById('db-count').textContent = songCount + ' songs in the database';
+      document.getElementById('empty-sub').textContent = songCount + ' songs in the database';
+      document.getElementById('guess-input').value = '';
+      window.scrollTo(0, 0);
+      document.getElementById('guess-input').focus();
+      updateHeader(); updateHintButton(); renderGuesses();
+    } catch (err) {
+      console.error('Start game error:', err);
+      alert('Failed to start game. Please try again.');
+    }
+  }
 
-                      // Brutal = lowest win rate (first entry, sorted ASC, min 20 games)
-                      const winRates = data.win_rates || [];
-                      const brutalCategory = winRates.length > 0 ? winRates[0].category : null;
+  async function submitGuess() {
+    const input = document.getElementById('guess-input');
+    const guess = input.value.trim();
+    if (!guess || gameWon || revealSecret) return;
+    const btn = document.getElementById('guess-btn');
+    btn.disabled = true; btn.textContent = '...';
+    try {
+      const res = await fetch('/.netlify/functions/guess', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, guess }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      guesses.push({ guess, barPercent: data.barPercent !== undefined ? data.barPercent : 2, heat: data.heat, hint: data.hint, solved: data.solved });
+      input.value = '';
+      if (data.solved) { gameWon = true; showWinState(data.title || guess, data.artist); }
+      updateHeader(); updateHintButton(); renderGuesses();
+    } catch (err) { console.error('Guess error:', err); alert('Failed to submit guess. Please try again.'); }
+    btn.disabled = false; btn.textContent = 'GUESS'; input.focus();
+  }
 
-                      const sorted = [...ALL_CATEGORIES].sort((a, b) => (allTimeMap[b.id] || 0) - (allTimeMap[a.id] || 0));
-                      const list = document.getElementById('category-list');
-                      list.innerHTML = sorted.map(cat => {
-                                const isHot = cat.id === hottestCategory && hottestPlays > 0;
-                                const isNew = cat.id === NEWEST_CATEGORY;
-                                const isBrutal = cat.id === brutalCategory;
-                                const hotBadge = isHot ? ' <span class="hot-badge">\uD83D\uDD25</span>' : '';
-                                const newBadge = isNew ? ' <span class="new-badge">\u2728</span>' : '';
-                                const brutalBadge = isBrutal ? ' <span class="brutal-badge">\uD83D\uDC80</span>' : '';
-                                return '<button class="era-btn" onclick="startGame(\'' + cat.id + '\')">' + cat.label + hotBadge + newBadge + brutalBadge + '</button>';
-                      }).join('');
-              } catch (e) {}
-        }
+  async function requestHint() {
+    if (hintsUsed >= 5 || gameWon || revealSecret) return;
+    const required = hintsUsed + 1;
+    if (guesses.length < required) return;
+    try {
+      const res = await fetch('/.netlify/functions/hint', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, hints_used: hintsUsed,
+          artist_hint_used: artistHintUsed, title_hint_used: titleHintUsed,
+          full_artist_used: fullArtistUsed, full_title_used: fullTitleUsed, guesses_count: guesses.length }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      hintPenaltyTotal += data.penalty; hintsUsed++; hintMessages.push(data.hint);
+      if (data.artist_hint_used !== undefined) artistHintUsed = data.artist_hint_used;
+      if (data.title_hint_used !== undefined) titleHintUsed = data.title_hint_used;
+      if (data.full_artist_used !== undefined) fullArtistUsed = data.full_artist_used;
+      if (data.full_title_used !== undefined) fullTitleUsed = data.full_title_used;
+      updateHintButton(); updateHeader(); renderHints();
+    } catch (err) { console.error('Hint error:', err); }
+  }
 
-        loadStats();
+  async function handleAction() {
+    if (gameWon || revealSecret) { startGame(currentCategory); return; }
+    try {
+      const res = await fetch('/.netlify/functions/give-up', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      revealSecret = true;
+      document.getElementById('input-area').style.display = 'none';
+      document.getElementById('result-area').innerHTML =
+        '<div style="margin-top:8px;padding:14px;background:rgba(255,255,255,0.05);border-radius:8px;font-size:14px;color:#888;text-align:center;">'
+        + 'The answer was: <span style="color:#ffaa33;font-family:\'Righteous\',cursive;">'
+        + escapeHtml(data.title) + ' - ' + escapeHtml(data.artist) + '</span>'
+        + '<div style="margin-top:10px;"><button class="play-again-btn" onclick="startGame(currentCategory)">PLAY AGAIN</button></div></div>';
+      document.getElementById('action-btn').textContent = 'NEW GAME';
+    } catch (err) { console.error('Give up error:', err); }
+  }
 
-        async function startGame(category) {
-              try {
-                      sessionId = null; guesses = []; hintsUsed = 0; hintMessages = []; hintPenaltyTotal = 0;
-                      artistHintUsed = false; titleHintUsed = false; fullArtistUsed = false; fullTitleUsed = false;
-                      gameWon = false; revealSecret = false; currentCategory = category;
-                      document.getElementById('header-info').textContent = (categoryLabels[category] || category) + ' \u00b7 Guesses: 0';
-                      document.getElementById('hints-box').style.display = 'none';
-                      document.getElementById('hints-box').innerHTML = '';
-                      document.getElementById('result-area').innerHTML = '';
-                      document.getElementById('action-btn').textContent = 'GIVE UP';
-                      updateHintButton();
-                      const res = await fetch('/.netlify/functions/start-game', {
-                                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ category }),
-                      });
-                      const data = await res.json();
-                      if (data.error) throw new Error(data.error);
-                      sessionId = data.session_id; songCount = data.song_count; currentCategory = category;
-                      document.getElementById('title-screen').style.display = 'none';
-                      document.getElementById('game-screen').style.display = 'flex';
-                      document.getElementById('input-area').style.display = 'block';
-                      document.getElementById('db-count').textContent = songCount + ' songs in the database';
-                      document.getElementById('empty-sub').textContent = songCount + ' songs in the database';
-                      document.getElementById('guess-input').value = '';
-                      window.scrollTo(0, 0);
-                      document.getElementById('guess-input').focus();
-                      updateHeader(); updateHintButton(); renderGuesses();
-              } catch (err) {
-                      console.error('Start game error:', err);
-                      alert('Failed to start game. Please try again.');
-              }
-        }
+  function showWinState(title, artist) {
+    document.getElementById('input-area').style.display = 'none';
+    const guessCount = guesses.length;
+    const penaltyStr = hintPenaltyTotal > 0 ? ' + ' + hintPenaltyTotal + ' hint penalty' : '';
+    const total = guessCount + hintPenaltyTotal;
+    const noHints = hintsUsed === 0 ? ' \u00b7 No hints! \uD83C\uDFC6' : '';
+    const artistLine = artist ? '<div style="font-size:14px;color:#8888aa;margin-bottom:8px;">' + escapeHtml(artist) + '</div>' : '';
+    document.getElementById('result-area').innerHTML =
+      '<div class="result-box win"><div class="result-emoji">\uD83C\uDF89</div>'
+      + '<div class="result-title">YOU GOT IT!</div>'
+      + '<div class="result-song">' + escapeHtml(title) + '</div>' + artistLine
+      + '<div class="result-stats">' + guessCount + ' guess' + (guessCount !== 1 ? 'es' : '') + penaltyStr + ' = ' + total + ' total' + noHints + '</div>'
+      + '<button class="play-again-btn" onclick="startGame(currentCategory)">PLAY AGAIN</button></div>';
+    document.getElementById('action-btn').textContent = 'NEW GAME';
+  }
 
-        async function submitGuess() {
-              const input = document.getElementById('guess-input');
-              const guess = input.value.trim();
-              if (!guess || gameWon || revealSecret) return;
-              const btn = document.getElementById('guess-btn');
-              btn.disabled = true; btn.textContent = '...';
-              try {
-                      const res = await fetch('/.netlify/functions/guess', {
-                                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ session_id: sessionId, guess }),
-                      });
-                      const data = await res.json();
-                      if (data.error) throw new Error(data.error);
-                      guesses.push({ guess, barPercent: data.barPercent !== undefined ? data.barPercent : 2, heat: data.heat, hint: data.hint, solved: data.solved });
-                      input.value = '';
-                      if (data.solved) { gameWon = true; showWinState(data.title || guess, data.artist); }
-                      updateHeader(); updateHintButton(); renderGuesses();
-              } catch (err) { console.error('Guess error:', err); alert('Failed to submit guess. Please try again.'); }
-              btn.disabled = false; btn.textContent = 'GUESS'; input.focus();
-        }
+  function updateHeader() {
+    const penaltyStr = hintPenaltyTotal > 0 ? ' (+' + hintPenaltyTotal + ' hints)' : '';
+    const label = categoryLabels[currentCategory] || currentCategory;
+    document.getElementById('header-info').textContent = label + ' \u00b7 Guesses: ' + guesses.length + penaltyStr;
+  }
 
-        async function requestHint() {
-              if (hintsUsed >= 5 || gameWon || revealSecret) return;
-              const required = hintsUsed + 1;
-              if (guesses.length < required) return;
-              try {
-                      const res = await fetch('/.netlify/functions/hint', {
-                                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ session_id: sessionId, hints_used: hintsUsed,
-                                                                artist_hint_used: artistHintUsed, title_hint_used: titleHintUsed,
-                                                                full_artist_used: fullArtistUsed, full_title_used: fullTitleUsed, guesses_count: guesses.length }),
-                      });
-                      const data = await res.json();
-                      if (data.error) throw new Error(data.error);
-                      hintPenaltyTotal += data.penalty; hintsUsed++; hintMessages.push(data.hint);
-                      if (data.artist_hint_used !== undefined) artistHintUsed = data.artist_hint_used;
-                      if (data.title_hint_used !== undefined) titleHintUsed = data.title_hint_used;
-                      if (data.full_artist_used !== undefined) fullArtistUsed = data.full_artist_used;
-                      if (data.full_title_used !== undefined) fullTitleUsed = data.full_title_used;
-                      updateHintButton(); updateHeader(); renderHints();
-              } catch (err) { console.error('Hint error:', err); }
-        }
+  function updateHintButton() {
+    const btn = document.getElementById('hint-btn');
+    if (gameWon || revealSecret || hintsUsed >= 5) { btn.className = 'hint-btn all-used'; return; }
+    const required = hintsUsed + 1;
+    const available = guesses.length >= required;
+    const penalty = HINT_PENALTIES[hintsUsed];
+    const isFree = penalty === 0;
+    const remaining = 5 - hintsUsed;
+    if (available) {
+      if (isFree) { btn.className = 'hint-btn free'; btn.textContent = '\uD83D\uDCA1 HINT (FREE \u00b7 ' + remaining + ' left)'; }
+      else { btn.className = 'hint-btn available'; btn.textContent = '\uD83D\uDCA1 HINT (+' + penalty + ' penalty \u00b7 ' + remaining + ' left)'; }
+    } else {
+      btn.className = 'hint-btn locked';
+      const diff = required - guesses.length;
+      btn.textContent = '\uD83D\uDD12 HINT (' + diff + ' more guess' + (diff !== 1 ? 'es' : '') + ' to unlock)';
+    }
+  }
 
-        async function handleAction() {
-              if (gameWon || revealSecret) { startGame(currentCategory); return; }
-              try {
-                      const res = await fetch('/.netlify/functions/give-up', {
-                                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ session_id: sessionId }),
-                      });
-                      const data = await res.json();
-                      if (data.error) throw new Error(data.error);
-                      revealSecret = true;
-                      document.getElementById('input-area').style.display = 'none';
-                      document.getElementById('result-area').innerHTML =
-                                '<div style="margin-top:8px;padding:14px;background:rgba(255,255,255,0.05);border-radius:8px;font-size:14px;color:#888;text-align:center;">'
-                        + 'The answer was: <span style="color:#ffaa33;font-family:\'Righteous\',cursive;">'
-                        + escapeHtml(data.title) + ' - ' + escapeHtml(data.artist) + '</span>'
-                        + '<div style="margin-top:10px;"><button class="play-again-btn" onclick="startGame(currentCategory)">PLAY AGAIN</button></div></div>';
-                      document.getElementById('action-btn').textContent = 'NEW GAME';
-              } catch (err) { console.error('Give up error:', err); }
-        }
+  function renderHints() {
+    const box = document.getElementById('hints-box');
+    if (hintMessages.length === 0) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    box.innerHTML = hintMessages.map(h => '<div class="hint-msg">' + escapeHtml(h) + '</div>').join('');
+  }
 
-        function showWinState(title, artist) {
-              document.getElementById('input-area').style.display = 'none';
-              const guessCount = guesses.length;
-              const penaltyStr = hintPenaltyTotal > 0 ? ' + ' + hintPenaltyTotal + ' hint penalty' : '';
-              const total = guessCount + hintPenaltyTotal;
-              const noHints = hintsUsed === 0 ? ' \u00b7 No hints! \uD83C\uDFC6' : '';
-              const artistLine = artist ? '<div style="font-size:14px;color:#8888aa;margin-bottom:8px;">' + escapeHtml(artist) + '</div>' : '';
-              document.getElementById('result-area').innerHTML =
-                      '<div class="result-box win"><div class="result-emoji">\uD83C\uDF89</div>'
-                + '<div class="result-title">YOU GOT IT!</div>'
-                + '<div class="result-song">' + escapeHtml(title) + '</div>' + artistLine
-                + '<div class="result-stats">' + guessCount + ' guess' + (guessCount !== 1 ? 'es' : '') + penaltyStr + ' = ' + total + ' total' + noHints + '</div>'
-                + '<button class="play-again-btn" onclick="startGame(currentCategory)">PLAY AGAIN</button></div>';
-              document.getElementById('action-btn').textContent = 'NEW GAME';
-        }
+  function renderGuesses() {
+    const container = document.getElementById('guesses-container');
+    const empty = document.getElementById('empty-state');
+    if (guesses.length === 0 && !gameWon) {
+      empty.style.display = 'block';
+      container.querySelectorAll('.latest-label,.latest-guess,.rankings-label,.guess-row').forEach(el => el.remove());
+      return;
+    }
+    empty.style.display = 'none';
+    const sorted = [...guesses].sort((a, b) => b.barPercent - a.barPercent);
+    let html = '';
+    if (!gameWon && guesses.length > 0) {
+      const latest = guesses[guesses.length - 1];
+      const color = getHeatColor(latest.heat);
+      html += '<div class="latest-label">LATEST GUESS</div>';
+      html += '<div class="latest-guess" style="border-left-color:' + color + '">' + renderGuessContent(latest, color) + '</div>';
+    }
+    if (guesses.length > 1 && !gameWon) html += '<div class="rankings-label">RANKINGS</div>';
+    sorted.forEach(g => {
+      const color = getHeatColor(g.heat);
+      const isWinner = g.score === 0 || (g.heat && g.heat.includes('ON FIRE') && gameWon);
+      html += '<div class="guess-row' + (isWinner ? ' winner' : '') + '">' + renderGuessContent(g, color) + '</div>';
+    });
+    container.querySelectorAll('.latest-label,.latest-guess,.rankings-label,.guess-row').forEach(el => el.remove());
+    container.insertAdjacentHTML('afterbegin', html);
+  }
 
-        function updateHeader() {
-              const penaltyStr = hintPenaltyTotal > 0 ? ' (+' + hintPenaltyTotal + ' hints)' : '';
-              const label = categoryLabels[currentCategory] || currentCategory;
-              document.getElementById('header-info').textContent = label + ' \u00b7 Guesses: ' + guesses.length + penaltyStr;
-        }
+  function renderGuessContent(g, color) {
+    const heatLabel = g.solved ? '\uD83C\uDFAF Got it!' : (g.heat || '\uD83E\uDDCA FREEZING');
+    const barWidth = g.barPercent !== undefined ? g.barPercent : 2;
+    let html = '<div class="guess-header"><span class="guess-text">' + escapeHtml(g.guess) + '</span>'
+      + '<span class="guess-heat" style="color:' + color + '">' + heatLabel + '</span></div>'
+      + '<div class="score-bar"><div class="score-bar-fill" style="width:' + barWidth + '%;background:' + color + ';box-shadow:0 0 8px ' + color + '40"></div></div>';
+    if (g.hint && !g.hint.includes("That's it")) html += '<div class="guess-hint">' + escapeHtml(g.hint) + '</div>';
+    return html;
+  }
 
-        function updateHintButton() {
-              const btn = document.getElementById('hint-btn');
-              if (gameWon || revealSecret || hintsUsed >= 5) { btn.className = 'hint-btn all-used'; return; }
-              const required = hintsUsed + 1;
-              const available = guesses.length >= required;
-              const penalty = HINT_PENALTIES[hintsUsed];
-              const isFree = penalty === 0;
-              const remaining = 5 - hintsUsed;
-              if (available) {
-                      if (isFree) { btn.className = 'hint-btn free'; btn.textContent = '\uD83D\uDCA1 HINT (FREE \u00b7 ' + remaining + ' left)'; }
-                      else { btn.className = 'hint-btn available'; btn.textContent = '\uD83D\uDCA1 HINT (+' + penalty + ' penalty \u00b7 ' + remaining + ' left)'; }
-              } else {
-                      btn.className = 'hint-btn locked';
-                      const diff = required - guesses.length;
-                      btn.textContent = '\uD83D\uDD12 HINT (' + diff + ' more guess' + (diff !== 1 ? 'es' : '') + ' to unlock)';
-              }
-        }
-
-        function renderHints() {
-              const box = document.getElementById('hints-box');
-              if (hintMessages.length === 0) { box.style.display = 'none'; return; }
-              box.style.display = 'block';
-              box.innerHTML = hintMessages.map(h => '<div class="hint-msg">' + escapeHtml(h) + '</div>').join('');
-        }
-
-        function renderGuesses() {
-              const container = document.getElementById('guesses-container');
-              const empty = document.getElementById('empty-state');
-              if (guesses.length === 0 && !gameWon) {
-                      empty.style.display = 'block';
-                      container.querySelectorAll('.latest-label,.latest-guess,.rankings-label,.guess-row').forEach(el => el.remove());
-                      return;
-              }
-              empty.style.display = 'none';
-              const sorted = [...guesses].sort((a, b) => b.barPercent - a.barPercent);
-              let html = '';
-              if (!gameWon && guesses.length > 0) {
-                      const latest = guesses[guesses.length - 1];
-                      const color = getHeatColor(latest.heat);
-                      html += '<div class="latest-label">LATEST GUESS</div>';
-                      html += '<div class="latest-guess" style="border-left-color:' + color + '">' + renderGuessContent(latest, color) + '</div>';
-              }
-              if (guesses.length > 1 && !gameWon) html += '<div class="rankings-label">RANKINGS</div>';
-              sorted.forEach(g => {
-                      const color = getHeatColor(g.heat);
-                      const isWinner = g.score === 0 || (g.heat && g.heat.includes('ON FIRE') && gameWon);
-                      html += '<div class="guess-row' + (isWinner ? ' winner' : '') + '">' + renderGuessContent(g, color) + '</div>';
-              });
-              container.querySelectorAll('.latest-label,.latest-guess,.rankings-label,.guess-row').forEach(el => el.remove());
-              container.insertAdjacentHTML('afterbegin', html);
-        }
-
-        function renderGuessContent(g, color) {
-              const heatLabel = g.solved ? '\uD83C\uDFAF Got it!' : (g.heat || '\uD83E\uDDCA FREEZING');
-              const barWidth = g.barPercent !== undefined ? g.barPercent : 2;
-              let html = '<div class="guess-header"><span class="guess-text">' + escapeHtml(g.guess) + '</span>'
-                + '<span class="guess-heat" style="color:' + color + '">' + heatLabel + '</span></div>'
-                + '<div class="score-bar"><div class="score-bar-fill" style="width:' + barWidth + '%;background:' + color + ';box-shadow:0 0 8px ' + color + '40"></div></div>';
-              if (g.hint && !g.hint.includes("That's it")) html += '<div class="guess-hint">' + escapeHtml(g.hint) + '</div>';
-              return html;
-        }
-
-        function escapeHtml(str) {
-              if (!str) return '';
-              const div = document.createElement('div');
-              div.textContent = str;
-              return div.innerHTML;
-        }
-    </script>
-  </body>
+  function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+</script>
+</body>
 </html>
