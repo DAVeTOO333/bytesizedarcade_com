@@ -280,8 +280,8 @@
                                 const isNew = cat.id === NEWEST_CATEGORY;
                                 const isBrutal = cat.id === brutalCategory;
                                 const hotBadge = isHot ? ' <span class="hot-badge">\uD83D\uDD25</span>' : '';
-                                const newBadge = isNew ? ' <span class="new-badge">\u2728 NEW</span>' : '';
-                                const brutalBadge = isBrutal ? ' <span class="brutal-badge">\uD83D\uDC80 BRUTAL</span>' : '';
+                                const newBadge = isNew ? ' <span class="new-badge">\u2728</span>' : '';
+                                const brutalBadge = isBrutal ? ' <span class="brutal-badge">\uD83D\uDC80</span>' : '';
                                 return '<button class="era-btn" onclick="startGame(\'' + cat.id + '\')">' + cat.label + hotBadge + newBadge + brutalBadge + '</button>';
                       }).join('');
               } catch (e) {}
@@ -477,8 +477,4 @@
         }
     </script>
   </body>
-</html>html>
-    </script>
-  </body>
-    </style></title>
-  </head>
+</html>
