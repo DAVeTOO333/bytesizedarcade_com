@@ -293,7 +293,7 @@ exports.handler = async (event) => {
     }
 
     const sessions = await sql`
-      SELECT gs.*, s.title, s.artist, s.tags, s.year, s.mood, s.tempo
+      SELECT gs.*, s.id AS song_id, s.title, s.artist, s.tags, s.year, s.mood, s.tempo
       FROM game_sessions gs
       JOIN songs s ON s.id = gs.secret_song_id
       WHERE gs.id = ${session_id}
@@ -305,6 +305,7 @@ exports.handler = async (event) => {
 
     const session = sessions[0];
     const secret = {
+      id: session.song_id,
       title: session.title,
       artist: session.artist,
       tags: session.tags,
@@ -352,6 +353,7 @@ exports.handler = async (event) => {
         heat: result.heat,
         hint: result.hint,
         solved: result.solved,
+        song_id: result.solved ? secret.id : null,
         guess_number: session.guesses + 1,
         title: result.title || null,
         artist: result.artist || null,
