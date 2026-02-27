@@ -49,8 +49,84 @@
       border-radius: 8px; color: #666; font-size: 11px; font-family: 'Righteous', cursive;
     }
     .coming-soon { font-size: 11px; color: #555; margin-top: 16px; }
-    .site-name { margin-top: 40px; font-size: 11px; color: #444; }
+    .hof-btn {
+      margin-top: 20px; padding: 10px 24px;
+      background: rgba(255,170,51,0.08); border: 1px solid #ffaa3340;
+      border-radius: 8px; color: #ffaa33; font-size: 14px;
+      font-family: 'Righteous', cursive; cursor: pointer;
+      transition: all 0.2s; max-width: 400px; width: 100%; text-align: center;
+    }
+    .hof-btn:hover { background: rgba(255,170,51,0.15); border-color: #ffaa33; }
+    .site-name { margin-top: 20px; font-size: 11px; color: #444; }
     #category-list { width: 100%; max-width: 400px; display: flex; flex-direction: column; }
+
+    /* Hall of Fame screen */
+    #hof-screen {
+      display: none; flex: 1; flex-direction: column;
+      padding: 16px; overflow-y: auto;
+    }
+    .hof-header {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 20px; padding-bottom: 12px;
+      border-bottom: 1px solid #ffffff10;
+    }
+    .hof-back-btn {
+      background: rgba(255,255,255,0.05); border: 1px solid #333;
+      border-radius: 6px; color: #888; font-size: 11px;
+      padding: 6px 12px; cursor: pointer; font-family: 'Righteous', cursive;
+    }
+    .hof-screen-title {
+      font-family: 'Righteous', cursive; font-size: 18px;
+      background: linear-gradient(90deg, #ff6633, #ffaa33);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      flex: 1; text-align: center;
+    }
+    .hof-category-section { margin-bottom: 12px; }
+    .hof-category-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px; background: rgba(255,102,51,0.08);
+      border: 1px solid #ff663330; border-radius: 8px; cursor: pointer;
+      transition: all 0.2s; user-select: none;
+    }
+    .hof-category-header:hover { background: rgba(255,102,51,0.14); border-color: #ff663360; }
+    .hof-category-header.open { border-radius: 8px 8px 0 0; border-bottom-color: transparent; }
+    .hof-cat-label { font-family: 'Righteous', cursive; font-size: 15px; color: #ffaa33; }
+    .hof-cat-meta { font-size: 11px; color: #666; display: flex; align-items: center; gap: 8px; }
+    .hof-cat-arrow { font-size: 10px; color: #555; transition: transform 0.2s; }
+    .hof-category-header.open .hof-cat-arrow { transform: rotate(180deg); }
+    .hof-category-body {
+      display: none; border: 1px solid #ff663330; border-top: none;
+      border-radius: 0 0 8px 8px; overflow: hidden;
+    }
+    .hof-category-body.open { display: block; }
+    .hof-song-row {
+      padding: 10px 16px; border-bottom: 1px solid #ffffff06;
+    }
+    .hof-song-row:last-child { border-bottom: none; }
+    .hof-song-title {
+      font-size: 13px; color: #ddd; margin-bottom: 2px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .hof-song-artist { font-size: 11px; color: #555; margin-bottom: 6px; }
+    .hof-full-badge {
+      font-size: 9px; color: #ffaa33; border: 1px solid #ffaa3340;
+      border-radius: 4px; padding: 1px 5px; letter-spacing: 1px;
+      font-family: 'Righteous', cursive;
+    }
+    .hof-entries { display: flex; flex-direction: column; gap: 3px; }
+    .hof-entry {
+      display: flex; align-items: center; gap: 8px; font-size: 12px;
+    }
+    .hof-medal { font-size: 13px; width: 20px; text-align: center; flex-shrink: 0; }
+    .hof-player { flex: 1; color: #ccc; font-family: 'Righteous', cursive; font-size: 12px; }
+    .hof-score { color: #ffaa33; font-size: 11px; }
+    .hof-empty-cat {
+      padding: 16px; text-align: center; font-size: 12px; color: #444;
+    }
+    .hof-loading { text-align: center; padding: 40px; color: #555; font-size: 14px; }
+    .hof-be-first { font-size: 11px; color: #444; font-style: italic; }
+
+    /* Game screen */
     #game-screen { display: none; flex: 1; flex-direction: column; padding: 16px; }
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .header-title { font-family: 'Righteous', cursive; font-size: 20px; color: #ff6633; cursor: pointer; }
@@ -95,7 +171,6 @@
       border-radius: 6px; color: #ff6633; font-size: 14px;
       font-family: 'Righteous', cursive; padding: 8px 24px; cursor: pointer;
     }
-    /* Leaderboard styles */
     .leaderboard-box {
       margin-top: 16px; padding: 14px;
       background: rgba(255,170,51,0.05); border: 1px solid #ffaa3330;
@@ -114,9 +189,7 @@
     .lb-name { flex: 1; color: #ddd; font-family: 'Righteous', cursive; font-size: 13px; }
     .lb-score { color: #ffaa33; font-size: 12px; white-space: nowrap; }
     .lb-empty { font-size: 12px; color: #555; text-align: center; padding: 8px 0; }
-    .lb-name-row {
-      display: flex; gap: 8px; margin-top: 12px; align-items: center;
-    }
+    .lb-name-row { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
     .lb-name-input {
       flex: 1; padding: 8px 12px; background: rgba(255,255,255,0.06);
       border: 1px solid #ffaa3360; border-radius: 6px; color: #fff;
@@ -154,6 +227,7 @@
 </head>
 <body>
 
+<!-- TITLE SCREEN -->
 <div id="title-screen">
   <div class="music-notes">&#9834; &#9835; &#9834;</div>
   <div class="game-title">SONG SLEUTH</div>
@@ -182,10 +256,24 @@
     <div class="locked-btn">&#128274; MORE SOON</div>
   </div>
   <div class="coming-soon">More categories coming soon...</div>
+  <button class="hof-btn" onclick="showHallOfFame()">&#127942; SONG SLEUTH HALL OF FAME</button>
   <div id="play-counter" style="margin-top:12px;font-size:13px;color:#6666aa;letter-spacing:1px;opacity:0;transition:opacity 0.5s ease;"></div>
   <div class="site-name">BYTESIZEDARCADE.COM</div>
 </div>
 
+<!-- HALL OF FAME SCREEN -->
+<div id="hof-screen">
+  <div class="hof-header">
+    <button class="hof-back-btn" onclick="showTitle()">&larr; BACK</button>
+    <div class="hof-screen-title">&#127942; HALL OF FAME</div>
+    <div style="width:60px"></div>
+  </div>
+  <div id="hof-content">
+    <div class="hof-loading">Loading...</div>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
 <div id="game-screen">
   <div class="header">
     <div class="header-title" onclick="showTitle()">SONG SLEUTH</div>
@@ -216,7 +304,6 @@
 </div>
 
 <script>
-  // Launch dates for NEW badge (7-day window)
   const CATEGORY_LAUNCH_DATES = {
     '2000s_hits': new Date('2026-02-26T00:00:00Z'),
   };
@@ -259,7 +346,6 @@
   let sessionPlayerName = null;
   const HINT_PENALTIES = [0, 2, 3, 4, 5];
 
-  // Restore session name from localStorage
   try { sessionPlayerName = localStorage.getItem('songSleuthPlayerName') || null; } catch(e) {}
 
   function getHeatColor(heat) {
@@ -276,7 +362,85 @@
     window.scrollTo(0, 0);
     document.getElementById('title-screen').style.display = 'flex';
     document.getElementById('game-screen').style.display = 'none';
+    document.getElementById('hof-screen').style.display = 'none';
     loadStats();
+  }
+
+  async function showHallOfFame() {
+    window.scrollTo(0, 0);
+    document.getElementById('title-screen').style.display = 'none';
+    document.getElementById('game-screen').style.display = 'none';
+    document.getElementById('hof-screen').style.display = 'flex';
+    document.getElementById('hof-content').innerHTML = '<div class="hof-loading">Loading Hall of Fame...</div>';
+    try {
+      const res = await fetch('/.netlify/functions/hall-of-fame');
+      const data = await res.json();
+      renderHallOfFame(data.categories || []);
+    } catch (e) {
+      document.getElementById('hof-content').innerHTML = '<div class="hof-loading">Failed to load. Try again later.</div>';
+    }
+  }
+
+  function renderHallOfFame(categories) {
+    const container = document.getElementById('hof-content');
+    if (!categories.length) {
+      container.innerHTML = '<div class="hof-loading">No scores yet. Be the first!</div>';
+      return;
+    }
+
+    let html = '';
+    for (const cat of categories) {
+      const songCount = cat.songs.length;
+      const metaText = songCount === 0 ? 'No scores yet' : songCount + ' song' + (songCount !== 1 ? 's' : '') + ' on the board';
+
+      html += '<div class="hof-category-section">';
+      html += '<div class="hof-category-header" onclick="toggleHofCategory(this)">';
+      html += '<span class="hof-cat-label">' + escapeHtml(cat.label) + '</span>';
+      html += '<div class="hof-cat-meta"><span>' + metaText + '</span><span class="hof-cat-arrow">&#9660;</span></div>';
+      html += '</div>';
+      html += '<div class="hof-category-body">';
+
+      if (songCount === 0) {
+        html += '<div class="hof-empty-cat">No scores yet — be the first!</div>';
+      } else {
+        for (const song of cat.songs) {
+          const isFull = song.entries.length >= 3;
+          html += '<div class="hof-song-row">';
+          html += '<div class="hof-song-title">';
+          html += '<span>' + escapeHtml(song.title) + '</span>';
+          if (isFull) html += '<span class="hof-full-badge">FULL</span>';
+          html += '</div>';
+          html += '<div class="hof-song-artist">' + escapeHtml(song.artist) + '</div>';
+          html += '<div class="hof-entries">';
+          song.entries.forEach((entry, i) => {
+            html += '<div class="hof-entry">';
+            html += '<span class="hof-medal">' + (MEDALS[i] || (i + 1) + '.') + '</span>';
+            html += '<span class="hof-player">' + escapeHtml(entry.player_name) + '</span>';
+            html += '<span class="hof-score">Score: ' + entry.score + '</span>';
+            html += '</div>';
+          });
+          // Empty slots
+          for (let i = song.entries.length; i < 3; i++) {
+            html += '<div class="hof-entry">';
+            html += '<span class="hof-medal">' + (MEDALS[i] || (i + 1) + '.') + '</span>';
+            html += '<span class="hof-be-first">open slot</span>';
+            html += '</div>';
+          }
+          html += '</div></div>';
+        }
+      }
+
+      html += '</div></div>';
+    }
+
+    container.innerHTML = html;
+  }
+
+  function toggleHofCategory(header) {
+    const body = header.nextElementSibling;
+    const isOpen = body.classList.contains('open');
+    header.classList.toggle('open', !isOpen);
+    body.classList.toggle('open', !isOpen);
   }
 
   async function loadStats() {
@@ -351,6 +515,7 @@
       if (data.error) throw new Error(data.error);
       sessionId = data.session_id; songCount = data.song_count; currentCategory = category;
       document.getElementById('title-screen').style.display = 'none';
+      document.getElementById('hof-screen').style.display = 'none';
       document.getElementById('game-screen').style.display = 'flex';
       document.getElementById('input-area').style.display = 'block';
       document.getElementById('db-count').textContent = songCount + ' songs in the database';
@@ -424,17 +589,13 @@
       revealSecret = true;
       currentSongId = data.song_id;
       document.getElementById('input-area').style.display = 'none';
-
-      // Fetch leaderboard for this song
       const lbHtml = await fetchLeaderboardHtml(data.song_id, null, false);
-
       document.getElementById('result-area').innerHTML =
         '<div style="margin-top:8px;padding:14px;background:rgba(255,255,255,0.05);border-radius:8px;font-size:14px;color:#888;text-align:center;">'
         + 'The answer was: <span style="color:#ffaa33;font-family:\'Righteous\',cursive;">'
         + escapeHtml(data.title) + ' - ' + escapeHtml(data.artist) + '</span>'
         + '<div style="margin-top:10px;"><button class="play-again-btn" onclick="startGame(currentCategory)">PLAY AGAIN</button></div></div>'
         + lbHtml;
-
       document.getElementById('action-btn').textContent = 'NEW GAME';
     } catch (err) { console.error('Give up error:', err); }
   }
@@ -446,10 +607,7 @@
     const total = guessCount + hintPenaltyTotal;
     const noHints = hintsUsed === 0 ? ' \u00b7 No hints! \uD83C\uDFC6' : '';
     const artistLine = artist ? '<div style="font-size:14px;color:#8888aa;margin-bottom:8px;">' + escapeHtml(artist) + '</div>' : '';
-
-    // Fetch leaderboard and check qualification
     const lbHtml = await fetchLeaderboardHtml(currentSongId, total, true);
-
     document.getElementById('result-area').innerHTML =
       '<div class="result-box win"><div class="result-emoji">\uD83C\uDF89</div>'
       + '<div class="result-title">YOU GOT IT!</div>'
@@ -457,7 +615,6 @@
       + '<div class="result-stats">' + guessCount + ' guess' + (guessCount !== 1 ? 'es' : '') + penaltyStr + ' = Score: ' + total + noHints + '</div>'
       + '<button class="play-again-btn" onclick="startGame(currentCategory)">PLAY AGAIN</button></div>'
       + lbHtml;
-
     document.getElementById('action-btn').textContent = 'NEW GAME';
   }
 
@@ -470,11 +627,9 @@
       });
       const data = await res.json();
       const board = data.leaderboard || [];
-
       const qualifies = isWin && playerScore !== null && (
         board.length < 3 || playerScore < board[board.length - 1].score
       );
-
       let entriesHtml = '';
       if (board.length === 0) {
         entriesHtml = '<div class="lb-empty">No scores yet — be the first!</div>';
@@ -487,7 +642,6 @@
             + '</div>';
         });
       }
-
       let nameInputHtml = '';
       if (qualifies) {
         const prefill = sessionPlayerName ? ' value="' + escapeHtml(sessionPlayerName) + '"' : '';
@@ -497,15 +651,10 @@
           + '<button class="lb-submit-btn" onclick="submitLeaderboard(' + songId + ',' + playerScore + ')">SUBMIT</button>'
           + '</div>';
       }
-
       return '<div class="leaderboard-box">'
-        + '<div class="leaderboard-title">\uD83C\uDFAF TOP SCORES — THIS SONG</div>'
-        + entriesHtml
-        + nameInputHtml
-        + '</div>';
-    } catch (e) {
-      return '';
-    }
+        + '<div class="leaderboard-title">\uD83C\uDFAF TOP SCORES \u2014 THIS SONG</div>'
+        + entriesHtml + nameInputHtml + '</div>';
+    } catch (e) { return ''; }
   }
 
   async function submitLeaderboard(songId, score) {
@@ -513,11 +662,8 @@
     if (!input) return;
     const name = input.value.trim().slice(0, 15);
     if (!name) { input.focus(); return; }
-
-    // Save to session
     sessionPlayerName = name;
     try { localStorage.setItem('songSleuthPlayerName', name); } catch(e) {}
-
     try {
       const res = await fetch('/.netlify/functions/leaderboard', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -525,8 +671,6 @@
       });
       const data = await res.json();
       const board = data.leaderboard || [];
-
-      // Re-render just the leaderboard box
       let entriesHtml = '';
       board.forEach((entry, i) => {
         entriesHtml += '<div class="leaderboard-entry">'
@@ -535,15 +679,11 @@
           + '<span class="lb-score">Score: ' + entry.score + '</span>'
           + '</div>';
       });
-
       const lbBox = document.querySelector('.leaderboard-box');
       if (lbBox) {
-        lbBox.innerHTML = '<div class="leaderboard-title">\uD83C\uDFAF TOP SCORES — THIS SONG</div>'
-          + entriesHtml;
+        lbBox.innerHTML = '<div class="leaderboard-title">\uD83C\uDFAF TOP SCORES \u2014 THIS SONG</div>' + entriesHtml;
       }
-    } catch (e) {
-      console.error('Leaderboard submit error:', e);
-    }
+    } catch (e) { console.error('Leaderboard submit error:', e); }
   }
 
   function updateHeader() {
