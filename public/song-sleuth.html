@@ -7,20 +7,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Righteous&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html {
-      height: 100%;
-      overflow-x: hidden;
-    }
+    html { height: 100%; overflow-x: hidden; }
     body {
-      min-height: 100%;
-      height: 100%;
+      min-height: 100%; height: 100%;
       background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2a 50%, #0a0a1a 100%);
       font-family: 'Segoe UI', system-ui, sans-serif;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      overflow-x: hidden;
-      -webkit-overflow-scrolling: touch;
+      color: #fff; display: flex; flex-direction: column;
+      overflow-x: hidden; -webkit-overflow-scrolling: touch;
     }
     @keyframes shimmer {
       0% { background-position: -200% center; }
@@ -37,10 +30,7 @@
       background-size: 200% auto; -webkit-background-clip: text;
       -webkit-text-fill-color: transparent; animation: shimmer 3s linear infinite; margin-bottom: 8px;
     }
-    .subtitle {
-      font-size: 12px; color: #8888aa; font-weight: 300; letter-spacing: 2px;
-      text-align: center; line-height: 1.8;
-    }
+    .subtitle { font-size: 12px; color: #8888aa; font-weight: 300; letter-spacing: 2px; text-align: center; line-height: 1.8; }
     .description { font-size: 13px; color: #aaaacc; margin: 20px 0; line-height: 1.6; max-width: 400px; text-align: center; }
     .era-label { font-size: 11px; letter-spacing: 4px; color: #ff6633; margin-bottom: 16px; font-weight: 600; }
     .era-btn {
@@ -52,10 +42,7 @@
     }
     .era-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(255,100,50,0.3); border-color: #ff6633; }
     .hot-badge, .new-badge, .brutal-badge, .bullseye-badge { display: inline-block; animation: pulse 1.5s ease-in-out infinite; }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.3); }
-    }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
     .locked-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; max-width: 400px; width: 100%; }
     .locked-btn {
       padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid #ffffff10;
@@ -108,6 +95,40 @@
       border-radius: 6px; color: #ff6633; font-size: 14px;
       font-family: 'Righteous', cursive; padding: 8px 24px; cursor: pointer;
     }
+    /* Leaderboard styles */
+    .leaderboard-box {
+      margin-top: 16px; padding: 14px;
+      background: rgba(255,170,51,0.05); border: 1px solid #ffaa3330;
+      border-radius: 10px; text-align: left;
+    }
+    .leaderboard-title {
+      font-family: 'Righteous', cursive; font-size: 12px;
+      color: #ffaa33; letter-spacing: 2px; margin-bottom: 10px; text-align: center;
+    }
+    .leaderboard-entry {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 0; border-bottom: 1px solid #ffffff08; font-size: 13px;
+    }
+    .leaderboard-entry:last-child { border-bottom: none; }
+    .lb-medal { font-size: 16px; width: 24px; text-align: center; flex-shrink: 0; }
+    .lb-name { flex: 1; color: #ddd; font-family: 'Righteous', cursive; font-size: 13px; }
+    .lb-score { color: #ffaa33; font-size: 12px; white-space: nowrap; }
+    .lb-empty { font-size: 12px; color: #555; text-align: center; padding: 8px 0; }
+    .lb-name-row {
+      display: flex; gap: 8px; margin-top: 12px; align-items: center;
+    }
+    .lb-name-input {
+      flex: 1; padding: 8px 12px; background: rgba(255,255,255,0.06);
+      border: 1px solid #ffaa3360; border-radius: 6px; color: #fff;
+      font-family: 'Righteous', cursive; font-size: 13px; outline: none;
+    }
+    .lb-name-input:focus { border-color: #ffaa33; }
+    .lb-submit-btn {
+      padding: 8px 16px; background: rgba(255,170,51,0.2); border: 1px solid #ffaa33;
+      border-radius: 6px; color: #ffaa33; font-size: 12px;
+      font-family: 'Righteous', cursive; cursor: pointer; white-space: nowrap;
+    }
+    .lb-qualify-msg { font-size: 12px; color: #64dc64; margin-top: 10px; text-align: center; }
     .guesses-container { flex: 1; overflow-y: auto; }
     .latest-label, .rankings-label { font-size: 9px; color: #666; margin-bottom: 4px; letter-spacing: 1px; }
     .latest-guess {
@@ -228,11 +249,18 @@
     '2000s_hits':    "\uD83D\uDCBF 2000's Hits",
   };
 
+  const MEDALS = ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'];
+
   let sessionId = null, songCount = 0, guesses = [], hintsUsed = 0, hintMessages = [];
   let hintPenaltyTotal = 0, artistHintUsed = false, titleHintUsed = false;
   let fullArtistUsed = false, fullTitleUsed = false;
   let gameWon = false, revealSecret = false, currentCategory = '80s_top10';
+  let currentSongId = null;
+  let sessionPlayerName = null;
   const HINT_PENALTIES = [0, 2, 3, 4, 5];
+
+  // Restore session name from localStorage
+  try { sessionPlayerName = localStorage.getItem('songSleuthPlayerName') || null; } catch(e) {}
 
   function getHeatColor(heat) {
     if (!heat) return "#4488ff";
@@ -266,15 +294,12 @@
       const last24hMap = {};
       (data.last_24h || []).forEach(row => { last24hMap[row.category] = row.plays; });
 
-      // HOT = most plays in last 24h
       let hottestCategory = null, hottestPlays = 0;
       Object.entries(last24hMap).forEach(([cat, plays]) => {
         if (plays > hottestPlays) { hottestPlays = plays; hottestCategory = cat; }
       });
 
-      // BRUTAL = lowest win rate among categories with 20+ plays
       let brutalCategory = null, brutalWinRate = Infinity;
-      // BULLSEYE = highest win rate among categories with 20+ plays
       let bullseyeCategory = null, bullseyeWinRate = -Infinity;
       (data.win_rates || []).forEach(row => {
         const rate = parseFloat(row.win_rate);
@@ -284,7 +309,6 @@
         }
       });
 
-      // NEW = launched within last 7 days
       const now = Date.now();
       const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
 
@@ -312,7 +336,7 @@
     try {
       sessionId = null; guesses = []; hintsUsed = 0; hintMessages = []; hintPenaltyTotal = 0;
       artistHintUsed = false; titleHintUsed = false; fullArtistUsed = false; fullTitleUsed = false;
-      gameWon = false; revealSecret = false; currentCategory = category;
+      gameWon = false; revealSecret = false; currentCategory = category; currentSongId = null;
       document.getElementById('header-info').textContent = (categoryLabels[category] || category) + ' \u00b7 Guesses: 0';
       document.getElementById('hints-box').style.display = 'none';
       document.getElementById('hints-box').innerHTML = '';
@@ -356,7 +380,11 @@
       if (data.error) throw new Error(data.error);
       guesses.push({ guess, barPercent: data.barPercent !== undefined ? data.barPercent : 2, heat: data.heat, hint: data.hint, solved: data.solved });
       input.value = '';
-      if (data.solved) { gameWon = true; showWinState(data.title || guess, data.artist); }
+      if (data.solved) {
+        gameWon = true;
+        currentSongId = data.song_id;
+        await showWinState(data.title || guess, data.artist);
+      }
       updateHeader(); updateHintButton(); renderGuesses();
     } catch (err) { console.error('Guess error:', err); alert('Failed to submit guess. Please try again.'); }
     btn.disabled = false; btn.textContent = 'GUESS'; input.focus();
@@ -394,30 +422,128 @@
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       revealSecret = true;
+      currentSongId = data.song_id;
       document.getElementById('input-area').style.display = 'none';
+
+      // Fetch leaderboard for this song
+      const lbHtml = await fetchLeaderboardHtml(data.song_id, null, false);
+
       document.getElementById('result-area').innerHTML =
         '<div style="margin-top:8px;padding:14px;background:rgba(255,255,255,0.05);border-radius:8px;font-size:14px;color:#888;text-align:center;">'
         + 'The answer was: <span style="color:#ffaa33;font-family:\'Righteous\',cursive;">'
         + escapeHtml(data.title) + ' - ' + escapeHtml(data.artist) + '</span>'
-        + '<div style="margin-top:10px;"><button class="play-again-btn" onclick="startGame(currentCategory)">PLAY AGAIN</button></div></div>';
+        + '<div style="margin-top:10px;"><button class="play-again-btn" onclick="startGame(currentCategory)">PLAY AGAIN</button></div></div>'
+        + lbHtml;
+
       document.getElementById('action-btn').textContent = 'NEW GAME';
     } catch (err) { console.error('Give up error:', err); }
   }
 
-  function showWinState(title, artist) {
+  async function showWinState(title, artist) {
     document.getElementById('input-area').style.display = 'none';
     const guessCount = guesses.length;
     const penaltyStr = hintPenaltyTotal > 0 ? ' + ' + hintPenaltyTotal + ' hint penalty' : '';
     const total = guessCount + hintPenaltyTotal;
     const noHints = hintsUsed === 0 ? ' \u00b7 No hints! \uD83C\uDFC6' : '';
     const artistLine = artist ? '<div style="font-size:14px;color:#8888aa;margin-bottom:8px;">' + escapeHtml(artist) + '</div>' : '';
+
+    // Fetch leaderboard and check qualification
+    const lbHtml = await fetchLeaderboardHtml(currentSongId, total, true);
+
     document.getElementById('result-area').innerHTML =
       '<div class="result-box win"><div class="result-emoji">\uD83C\uDF89</div>'
       + '<div class="result-title">YOU GOT IT!</div>'
       + '<div class="result-song">' + escapeHtml(title) + '</div>' + artistLine
-      + '<div class="result-stats">' + guessCount + ' guess' + (guessCount !== 1 ? 'es' : '') + penaltyStr + ' = ' + total + ' total' + noHints + '</div>'
-      + '<button class="play-again-btn" onclick="startGame(currentCategory)">PLAY AGAIN</button></div>';
+      + '<div class="result-stats">' + guessCount + ' guess' + (guessCount !== 1 ? 'es' : '') + penaltyStr + ' = Score: ' + total + noHints + '</div>'
+      + '<button class="play-again-btn" onclick="startGame(currentCategory)">PLAY AGAIN</button></div>'
+      + lbHtml;
+
     document.getElementById('action-btn').textContent = 'NEW GAME';
+  }
+
+  async function fetchLeaderboardHtml(songId, playerScore, isWin) {
+    if (!songId) return '';
+    try {
+      const res = await fetch('/.netlify/functions/leaderboard', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get', song_id: songId }),
+      });
+      const data = await res.json();
+      const board = data.leaderboard || [];
+
+      const qualifies = isWin && playerScore !== null && (
+        board.length < 3 || playerScore < board[board.length - 1].score
+      );
+
+      let entriesHtml = '';
+      if (board.length === 0) {
+        entriesHtml = '<div class="lb-empty">No scores yet — be the first!</div>';
+      } else {
+        board.forEach((entry, i) => {
+          entriesHtml += '<div class="leaderboard-entry">'
+            + '<span class="lb-medal">' + (MEDALS[i] || (i + 1) + '.') + '</span>'
+            + '<span class="lb-name">' + escapeHtml(entry.player_name) + '</span>'
+            + '<span class="lb-score">Score: ' + entry.score + '</span>'
+            + '</div>';
+        });
+      }
+
+      let nameInputHtml = '';
+      if (qualifies) {
+        const prefill = sessionPlayerName ? ' value="' + escapeHtml(sessionPlayerName) + '"' : '';
+        nameInputHtml = '<div class="lb-qualify-msg">\uD83C\uDFAF You made the leaderboard!</div>'
+          + '<div class="lb-name-row">'
+          + '<input class="lb-name-input" id="lb-name-input" type="text" maxlength="15" placeholder="Enter your name..."' + prefill + ' onkeydown="if(event.key===\'Enter\')submitLeaderboard(' + songId + ',' + playerScore + ')">'
+          + '<button class="lb-submit-btn" onclick="submitLeaderboard(' + songId + ',' + playerScore + ')">SUBMIT</button>'
+          + '</div>';
+      }
+
+      return '<div class="leaderboard-box">'
+        + '<div class="leaderboard-title">\uD83C\uDFAF TOP SCORES — THIS SONG</div>'
+        + entriesHtml
+        + nameInputHtml
+        + '</div>';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  async function submitLeaderboard(songId, score) {
+    const input = document.getElementById('lb-name-input');
+    if (!input) return;
+    const name = input.value.trim().slice(0, 15);
+    if (!name) { input.focus(); return; }
+
+    // Save to session
+    sessionPlayerName = name;
+    try { localStorage.setItem('songSleuthPlayerName', name); } catch(e) {}
+
+    try {
+      const res = await fetch('/.netlify/functions/leaderboard', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'submit', song_id: songId, player_name: name, score }),
+      });
+      const data = await res.json();
+      const board = data.leaderboard || [];
+
+      // Re-render just the leaderboard box
+      let entriesHtml = '';
+      board.forEach((entry, i) => {
+        entriesHtml += '<div class="leaderboard-entry">'
+          + '<span class="lb-medal">' + (MEDALS[i] || (i + 1) + '.') + '</span>'
+          + '<span class="lb-name">' + escapeHtml(entry.player_name) + '</span>'
+          + '<span class="lb-score">Score: ' + entry.score + '</span>'
+          + '</div>';
+      });
+
+      const lbBox = document.querySelector('.leaderboard-box');
+      if (lbBox) {
+        lbBox.innerHTML = '<div class="leaderboard-title">\uD83C\uDFAF TOP SCORES — THIS SONG</div>'
+          + entriesHtml;
+      }
+    } catch (e) {
+      console.error('Leaderboard submit error:', e);
+    }
   }
 
   function updateHeader() {
