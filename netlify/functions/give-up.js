@@ -17,7 +17,7 @@ exports.handler = async (event) => {
     }
 
     const sessions = await sql`
-      SELECT s.title, s.artist, s.year
+      SELECT s.id AS song_id, s.title, s.artist, s.year
       FROM game_sessions gs
       JOIN songs s ON s.id = gs.secret_song_id
       WHERE gs.id = ${session_id}
@@ -30,6 +30,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       body: JSON.stringify({
+        song_id: sessions[0].song_id,
         title: sessions[0].title,
         artist: sessions[0].artist,
         year: sessions[0].year,
