@@ -51,7 +51,7 @@
       transition: all 0.2s; margin-bottom: 8px; text-align: center;
     }
     .era-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(255,100,50,0.3); border-color: #ff6633; }
-    .hot-badge, .new-badge, .brutal-badge { display: inline-block; animation: pulse 1.5s ease-in-out infinite; }
+    .hot-badge, .new-badge, .brutal-badge, .bullseye-badge { display: inline-block; animation: pulse 1.5s ease-in-out infinite; }
     @keyframes pulse {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.3); }
@@ -195,7 +195,7 @@
 </div>
 
 <script>
-  // Launch dates for NEW badge (72-hour window)
+  // Launch dates for NEW badge (7-day window)
   const CATEGORY_LAUNCH_DATES = {
     '2000s_hits': new Date('2026-02-26T00:00:00Z'),
   };
@@ -266,35 +266,40 @@
       const last24hMap = {};
       (data.last_24h || []).forEach(row => { last24hMap[row.category] = row.plays; });
 
-      // Hottest = most plays in last 24h
+      // HOT = most plays in last 24h
       let hottestCategory = null, hottestPlays = 0;
       Object.entries(last24hMap).forEach(([cat, plays]) => {
         if (plays > hottestPlays) { hottestPlays = plays; hottestCategory = cat; }
       });
 
-      // Brutal = lowest win rate among categories with 20+ plays
+      // BRUTAL = lowest win rate among categories with 20+ plays
       let brutalCategory = null, brutalWinRate = Infinity;
+      // BULLSEYE = highest win rate among categories with 20+ plays
+      let bullseyeCategory = null, bullseyeWinRate = -Infinity;
       (data.win_rates || []).forEach(row => {
-        if (row.total >= 20 && parseFloat(row.win_rate) < brutalWinRate) {
-          brutalWinRate = parseFloat(row.win_rate);
-          brutalCategory = row.category;
+        const rate = parseFloat(row.win_rate);
+        if (row.total >= 20) {
+          if (rate < brutalWinRate) { brutalWinRate = rate; brutalCategory = row.category; }
+          if (rate > bullseyeWinRate) { bullseyeWinRate = rate; bullseyeCategory = row.category; }
         }
       });
 
-      // NEW = launched within last 72 hours
+      // NEW = launched within last 7 days
       const now = Date.now();
-      const SEVENTY_TWO_HOURS = 72 * 60 * 60 * 1000;
+      const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
 
       const sorted = [...ALL_CATEGORIES].sort((a, b) => (allTimeMap[b.id] || 0) - (allTimeMap[a.id] || 0));
       const list = document.getElementById('category-list');
       list.innerHTML = sorted.map(cat => {
         const isHot = cat.id === hottestCategory && hottestPlays > 0;
         const launchDate = CATEGORY_LAUNCH_DATES[cat.id];
-        const isNew = launchDate && (now - launchDate.getTime() < SEVENTY_TWO_HOURS);
-        const isBrutal = !isNew && cat.id === brutalCategory;
+        const isNew = launchDate && (now - launchDate.getTime() < SEVEN_DAYS);
+        const isBullseye = !isNew && cat.id === bullseyeCategory;
+        const isBrutal = !isNew && !isBullseye && cat.id === brutalCategory;
         let badge = '';
         if (isHot) badge = ' <span class="hot-badge">\uD83D\uDD25</span>';
         else if (isNew) badge = ' <span class="new-badge">\u2728</span>';
+        else if (isBullseye) badge = ' <span class="bullseye-badge">\uD83C\uDFAF</span>';
         else if (isBrutal) badge = ' <span class="brutal-badge">\uD83D\uDC80</span>';
         return '<button class="era-btn" onclick="startGame(\'' + cat.id + '\')">' + cat.label + badge + '</button>';
       }).join('');
