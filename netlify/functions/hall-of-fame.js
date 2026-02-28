@@ -19,6 +19,8 @@ const CATEGORY_LABELS = {
   '2000s_hits':    "\uD83D\uDCBF 2000's Hits",
 };
 
+const SLOT_POINTS = [30, 20, 10];
+
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") {
     return { statusCode: 200, body: "" };
@@ -71,6 +73,39 @@ exports.handler = async (event) => {
       }
     }
 
+    // Calculate Top Sleuths
+    // For each player: total points (30/20/10 per slot) and categories represented
+    const sleutMap = {}; // player_name -> { points, categories: Set }
+
+    for (const cat of Object.keys(categoryMap)) {
+      for (const song of Object.values(categoryMap[cat])) {
+        song.entries.forEach((entry, slotIndex) => {
+          const name = entry.player_name;
+          if (!sleutMap[name]) sleutMap[name] = { points: 0, categories: new Set() };
+          sleutMap[name].points += SLOT_POINTS[slotIndex] || 0;
+          sleutMap[name].categories.add(cat);
+        });
+      }
+    }
+
+    // Build sleuth list with sleuth score = points * category count
+    const sleuths = Object.entries(sleutMap).map(([name, data]) => ({
+      name,
+      points: data.points,
+      category_count: data.categories.size,
+      sleuth_score: data.points * data.categories.size,
+    }));
+
+    // Top 3 by raw points (the podium)
+    const podium = [...sleuths]
+      .sort((a, b) => b.points - a.points || b.category_count - a.category_count)
+      .slice(0, 3);
+
+    // Renaissance Sleuth: highest sleuth_score (points * categories)
+    const renaissance = [...sleuths]
+      .sort((a, b) => b.sleuth_score - a.sleuth_score)
+      .slice(0, 1)[0] || null;
+
     // Build result: for each category, sort songs by competitiveness, take top 20
     const result = [];
 
@@ -86,10 +121,6 @@ exports.handler = async (event) => {
 
       const songs = Object.values(categoryMap[cat]);
 
-      // Sort by competitiveness:
-      // 1. Most entries (desc) — full boards first
-      // 2. Best score (asc) — lower is better
-      // 3. Most recent activity (desc) — tiebreaker
       songs.sort((a, b) => {
         if (b.entries.length !== a.entries.length) return b.entries.length - a.entries.length;
         if (a.best_score !== b.best_score) return a.best_score - b.best_score;
@@ -105,7 +136,11 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ categories: result }),
+      body: JSON.stringify({
+        podium,
+        renaissance,
+        categories: result,
+      }),
     };
   } catch (err) {
     console.error("hall-of-fame error:", err);
