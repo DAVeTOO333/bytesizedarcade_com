@@ -87,9 +87,7 @@
       font-family: 'Righteous', cursive; font-size: 11px; letter-spacing: 3px;
       color: #ffaa33; text-align: center; margin-bottom: 14px;
     }
-    .podium-row {
-      display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px;
-    }
+    .podium-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
     .podium-entry {
       display: flex; align-items: center; gap: 10px; padding: 8px 12px;
       background: rgba(255,255,255,0.04); border-radius: 8px;
@@ -104,9 +102,7 @@
     .podium-empty { font-size: 12px; color: #444; font-style: italic; text-align: center; padding: 8px 0; }
 
     /* Renaissance Sleuth */
-    .renaissance-divider {
-      border: none; border-top: 1px solid #ffffff10; margin: 12px 0;
-    }
+    .renaissance-divider { border: none; border-top: 1px solid #ffffff10; margin: 12px 0; }
     .renaissance-row {
       display: flex; align-items: center; gap: 10px; padding: 8px 12px;
       background: rgba(100,149,237,0.08); border: 1px solid #6495ed30; border-radius: 8px;
@@ -136,6 +132,18 @@
       border-radius: 0 0 8px 8px; overflow: hidden;
     }
     .hof-category-body.open { display: block; }
+
+    /* Most Wanted banner */
+    .most-wanted-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 16px; background: rgba(255,50,50,0.07);
+      border-bottom: 1px solid #ff333320;
+    }
+    .most-wanted-icon { font-size: 14px; flex-shrink: 0; }
+    .most-wanted-label { font-size: 9px; letter-spacing: 2px; color: #ff6644; font-family: 'Righteous', cursive; }
+    .most-wanted-name { font-family: 'Righteous', cursive; font-size: 13px; color: #eee; }
+    .most-wanted-pts { font-size: 11px; color: #ff6644; margin-left: auto; white-space: nowrap; }
+
     .hof-song-row { padding: 10px 16px; border-bottom: 1px solid #ffffff06; }
     .hof-song-row:last-child { border-bottom: none; }
     .hof-song-title {
@@ -418,7 +426,6 @@
     html += '<div class="top-sleuths-card">';
     html += '<div class="top-sleuths-title">TOP SLEUTHS</div>';
     html += '<div class="podium-row">';
-
     if (podium.length === 0) {
       html += '<div class="podium-empty">No scores yet — be the first on the board!</div>';
     } else {
@@ -431,7 +438,6 @@
         html += '<span class="podium-cats">' + catWord + '</span>';
         html += '</div>';
       });
-      // Empty podium slots
       for (let i = podium.length; i < 3; i++) {
         html += '<div class="podium-entry ' + PODIUM_CLASSES[i] + '">';
         html += '<span class="podium-medal">' + MEDALS[i] + '</span>';
@@ -439,7 +445,6 @@
         html += '</div>';
       }
     }
-
     html += '</div>';
 
     // RENAISSANCE SLEUTH
@@ -471,6 +476,19 @@
         html += '<div class="hof-cat-meta"><span>' + metaText + '</span><span class="hof-cat-arrow">&#9660;</span></div>';
         html += '</div>';
         html += '<div class="hof-category-body">';
+
+        // MOST WANTED banner
+        if (cat.most_wanted) {
+          html += '<div class="most-wanted-row">';
+          html += '<span class="most-wanted-icon">\uD83E\uDD35</span>';
+          html += '<div style="flex:1">';
+          html += '<div class="most-wanted-label">MOST WANTED</div>';
+          html += '<div class="most-wanted-name">' + escapeHtml(cat.most_wanted.name) + '</div>';
+          html += '</div>';
+          html += '<span class="most-wanted-pts">' + cat.most_wanted.points + ' pts</span>';
+          html += '</div>';
+        }
+
         if (count === 0) {
           html += '<div class="hof-empty-cat">No scores yet — be the first!</div>';
         } else {
