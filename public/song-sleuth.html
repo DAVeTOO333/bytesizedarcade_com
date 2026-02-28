@@ -19,6 +19,7 @@
       0% { background-position: -200% center; }
       100% { background-position: 200% center; }
     }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
     #title-screen {
       flex: 1; display: flex; flex-direction: column;
       align-items: center; justify-content: center; padding: 20px;
@@ -42,7 +43,6 @@
     }
     .era-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(255,100,50,0.3); border-color: #ff6633; }
     .hot-badge, .new-badge, .brutal-badge, .bullseye-badge { display: inline-block; animation: pulse 1.5s ease-in-out infinite; }
-    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
     .locked-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; max-width: 400px; width: 100%; }
     .locked-btn {
       padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid #ffffff10;
@@ -61,14 +61,10 @@
     #category-list { width: 100%; max-width: 400px; display: flex; flex-direction: column; }
 
     /* Hall of Fame screen */
-    #hof-screen {
-      display: none; flex: 1; flex-direction: column;
-      padding: 16px; overflow-y: auto;
-    }
+    #hof-screen { display: none; flex: 1; flex-direction: column; padding: 16px; overflow-y: auto; }
     .hof-header {
       display: flex; align-items: center; gap: 12px;
-      margin-bottom: 20px; padding-bottom: 12px;
-      border-bottom: 1px solid #ffffff10;
+      margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #ffffff10;
     }
     .hof-back-btn {
       background: rgba(255,255,255,0.05); border: 1px solid #333;
@@ -81,6 +77,47 @@
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       flex: 1; text-align: center;
     }
+
+    /* Top Sleuths podium */
+    .top-sleuths-card {
+      background: rgba(255,170,51,0.06); border: 1px solid #ffaa3330;
+      border-radius: 12px; padding: 16px; margin-bottom: 20px;
+    }
+    .top-sleuths-title {
+      font-family: 'Righteous', cursive; font-size: 11px; letter-spacing: 3px;
+      color: #ffaa33; text-align: center; margin-bottom: 14px;
+    }
+    .podium-row {
+      display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px;
+    }
+    .podium-entry {
+      display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+      background: rgba(255,255,255,0.04); border-radius: 8px;
+    }
+    .podium-entry.first  { background: rgba(255,215,0,0.08);  border: 1px solid #ffd70030; }
+    .podium-entry.second { background: rgba(192,192,192,0.06); border: 1px solid #c0c0c020; }
+    .podium-entry.third  { background: rgba(205,127,50,0.06);  border: 1px solid #cd7f3220; }
+    .podium-medal { font-size: 18px; flex-shrink: 0; }
+    .podium-name { flex: 1; font-family: 'Righteous', cursive; font-size: 14px; color: #eee; }
+    .podium-pts { font-size: 12px; color: #ffaa33; white-space: nowrap; }
+    .podium-cats { font-size: 10px; color: #555; white-space: nowrap; }
+    .podium-empty { font-size: 12px; color: #444; font-style: italic; text-align: center; padding: 8px 0; }
+
+    /* Renaissance Sleuth */
+    .renaissance-divider {
+      border: none; border-top: 1px solid #ffffff10; margin: 12px 0;
+    }
+    .renaissance-row {
+      display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+      background: rgba(100,149,237,0.08); border: 1px solid #6495ed30; border-radius: 8px;
+    }
+    .renaissance-diamond { font-size: 20px; flex-shrink: 0; }
+    .renaissance-label { font-size: 10px; letter-spacing: 2px; color: #6495ed; font-family: 'Righteous', cursive; }
+    .renaissance-name { font-family: 'Righteous', cursive; font-size: 14px; color: #eee; }
+    .renaissance-meta { font-size: 10px; color: #555; margin-top: 1px; }
+    .renaissance-empty { font-size: 12px; color: #444; font-style: italic; }
+
+    /* Category dropdowns */
     .hof-category-section { margin-bottom: 12px; }
     .hof-category-header {
       display: flex; justify-content: space-between; align-items: center;
@@ -99,9 +136,7 @@
       border-radius: 0 0 8px 8px; overflow: hidden;
     }
     .hof-category-body.open { display: block; }
-    .hof-song-row {
-      padding: 10px 16px; border-bottom: 1px solid #ffffff06;
-    }
+    .hof-song-row { padding: 10px 16px; border-bottom: 1px solid #ffffff06; }
     .hof-song-row:last-child { border-bottom: none; }
     .hof-song-title {
       font-size: 13px; color: #ddd; margin-bottom: 2px;
@@ -110,19 +145,14 @@
     .hof-song-artist { font-size: 11px; color: #555; margin-bottom: 6px; }
     .hof-full-badge {
       font-size: 9px; color: #ffaa33; border: 1px solid #ffaa3340;
-      border-radius: 4px; padding: 1px 5px; letter-spacing: 1px;
-      font-family: 'Righteous', cursive;
+      border-radius: 4px; padding: 1px 5px; letter-spacing: 1px; font-family: 'Righteous', cursive;
     }
     .hof-entries { display: flex; flex-direction: column; gap: 3px; }
-    .hof-entry {
-      display: flex; align-items: center; gap: 8px; font-size: 12px;
-    }
+    .hof-entry { display: flex; align-items: center; gap: 8px; font-size: 12px; }
     .hof-medal { font-size: 13px; width: 20px; text-align: center; flex-shrink: 0; }
     .hof-player { flex: 1; color: #ccc; font-family: 'Righteous', cursive; font-size: 12px; }
     .hof-score { color: #ffaa33; font-size: 11px; }
-    .hof-empty-cat {
-      padding: 16px; text-align: center; font-size: 12px; color: #444;
-    }
+    .hof-empty-cat { padding: 16px; text-align: center; font-size: 12px; color: #444; }
     .hof-loading { text-align: center; padding: 40px; color: #555; font-size: 14px; }
     .hof-be-first { font-size: 11px; color: #444; font-style: italic; }
 
@@ -172,9 +202,8 @@
       font-family: 'Righteous', cursive; padding: 8px 24px; cursor: pointer;
     }
     .leaderboard-box {
-      margin-top: 16px; padding: 14px;
-      background: rgba(255,170,51,0.05); border: 1px solid #ffaa3330;
-      border-radius: 10px; text-align: left;
+      margin-top: 16px; padding: 14px; background: rgba(255,170,51,0.05);
+      border: 1px solid #ffaa3330; border-radius: 10px; text-align: left;
     }
     .leaderboard-title {
       font-family: 'Righteous', cursive; font-size: 12px;
@@ -337,13 +366,13 @@
   };
 
   const MEDALS = ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'];
+  const PODIUM_CLASSES = ['first', 'second', 'third'];
 
   let sessionId = null, songCount = 0, guesses = [], hintsUsed = 0, hintMessages = [];
   let hintPenaltyTotal = 0, artistHintUsed = false, titleHintUsed = false;
   let fullArtistUsed = false, fullTitleUsed = false;
   let gameWon = false, revealSecret = false, currentCategory = '80s_top10';
-  let currentSongId = null;
-  let sessionPlayerName = null;
+  let currentSongId = null, sessionPlayerName = null;
   const HINT_PENALTIES = [0, 2, 3, 4, 5];
 
   try { sessionPlayerName = localStorage.getItem('songSleuthPlayerName') || null; } catch(e) {}
@@ -375,62 +404,98 @@
     try {
       const res = await fetch('/.netlify/functions/hall-of-fame');
       const data = await res.json();
-      renderHallOfFame(data.categories || []);
+      renderHallOfFame(data.podium || [], data.renaissance || null, data.categories || []);
     } catch (e) {
       document.getElementById('hof-content').innerHTML = '<div class="hof-loading">Failed to load. Try again later.</div>';
     }
   }
 
-  function renderHallOfFame(categories) {
+  function renderHallOfFame(podium, renaissance, categories) {
     const container = document.getElementById('hof-content');
-    if (!categories.length) {
-      container.innerHTML = '<div class="hof-loading">No scores yet. Be the first!</div>';
-      return;
+    let html = '';
+
+    // TOP SLEUTHS CARD
+    html += '<div class="top-sleuths-card">';
+    html += '<div class="top-sleuths-title">TOP SLEUTHS</div>';
+    html += '<div class="podium-row">';
+
+    if (podium.length === 0) {
+      html += '<div class="podium-empty">No scores yet — be the first on the board!</div>';
+    } else {
+      podium.forEach((sleuth, i) => {
+        const catWord = sleuth.category_count === 1 ? '1 category' : sleuth.category_count + ' categories';
+        html += '<div class="podium-entry ' + PODIUM_CLASSES[i] + '">';
+        html += '<span class="podium-medal">' + MEDALS[i] + '</span>';
+        html += '<span class="podium-name">' + escapeHtml(sleuth.name) + '</span>';
+        html += '<span class="podium-pts">' + sleuth.points + ' pts</span>';
+        html += '<span class="podium-cats">' + catWord + '</span>';
+        html += '</div>';
+      });
+      // Empty podium slots
+      for (let i = podium.length; i < 3; i++) {
+        html += '<div class="podium-entry ' + PODIUM_CLASSES[i] + '">';
+        html += '<span class="podium-medal">' + MEDALS[i] + '</span>';
+        html += '<span class="podium-name" style="color:#444;font-style:italic;">open</span>';
+        html += '</div>';
+      }
     }
 
-    let html = '';
-    for (const cat of categories) {
-      const songCount = cat.songs.length;
-      const metaText = songCount === 0 ? 'No scores yet' : songCount + ' song' + (songCount !== 1 ? 's' : '') + ' on the board';
+    html += '</div>';
 
-      html += '<div class="hof-category-section">';
-      html += '<div class="hof-category-header" onclick="toggleHofCategory(this)">';
-      html += '<span class="hof-cat-label">' + escapeHtml(cat.label) + '</span>';
-      html += '<div class="hof-cat-meta"><span>' + metaText + '</span><span class="hof-cat-arrow">&#9660;</span></div>';
-      html += '</div>';
-      html += '<div class="hof-category-body">';
+    // RENAISSANCE SLEUTH
+    html += '<hr class="renaissance-divider">';
+    html += '<div class="renaissance-row">';
+    html += '<span class="renaissance-diamond">\uD83D\uDC8E</span>';
+    html += '<div style="flex:1">';
+    html += '<div class="renaissance-label">RENAISSANCE SLEUTH</div>';
+    if (renaissance) {
+      const catWord = renaissance.category_count === 1 ? '1 category' : renaissance.category_count + ' categories';
+      html += '<div class="renaissance-name">' + escapeHtml(renaissance.name) + '</div>';
+      html += '<div class="renaissance-meta">' + renaissance.points + ' pts across ' + catWord + '</div>';
+    } else {
+      html += '<div class="renaissance-empty">Play across multiple categories to claim this title</div>';
+    }
+    html += '</div></div>';
+    html += '</div>'; // end top-sleuths-card
 
-      if (songCount === 0) {
-        html += '<div class="hof-empty-cat">No scores yet — be the first!</div>';
-      } else {
-        for (const song of cat.songs) {
-          const isFull = song.entries.length >= 3;
-          html += '<div class="hof-song-row">';
-          html += '<div class="hof-song-title">';
-          html += '<span>' + escapeHtml(song.title) + '</span>';
-          if (isFull) html += '<span class="hof-full-badge">FULL</span>';
-          html += '</div>';
-          html += '<div class="hof-song-artist">' + escapeHtml(song.artist) + '</div>';
-          html += '<div class="hof-entries">';
-          song.entries.forEach((entry, i) => {
-            html += '<div class="hof-entry">';
-            html += '<span class="hof-medal">' + (MEDALS[i] || (i + 1) + '.') + '</span>';
-            html += '<span class="hof-player">' + escapeHtml(entry.player_name) + '</span>';
-            html += '<span class="hof-score">Score: ' + entry.score + '</span>';
+    // CATEGORY DROPDOWNS
+    if (!categories.length) {
+      html += '<div class="hof-loading">No scores yet. Be the first!</div>';
+    } else {
+      for (const cat of categories) {
+        const count = cat.songs.length;
+        const metaText = count === 0 ? 'No scores yet' : count + ' song' + (count !== 1 ? 's' : '') + ' on the board';
+        html += '<div class="hof-category-section">';
+        html += '<div class="hof-category-header" onclick="toggleHofCategory(this)">';
+        html += '<span class="hof-cat-label">' + escapeHtml(cat.label) + '</span>';
+        html += '<div class="hof-cat-meta"><span>' + metaText + '</span><span class="hof-cat-arrow">&#9660;</span></div>';
+        html += '</div>';
+        html += '<div class="hof-category-body">';
+        if (count === 0) {
+          html += '<div class="hof-empty-cat">No scores yet — be the first!</div>';
+        } else {
+          for (const song of cat.songs) {
+            const isFull = song.entries.length >= 3;
+            html += '<div class="hof-song-row">';
+            html += '<div class="hof-song-title"><span>' + escapeHtml(song.title) + '</span>';
+            if (isFull) html += '<span class="hof-full-badge">FULL</span>';
             html += '</div>';
-          });
-          // Empty slots
-          for (let i = song.entries.length; i < 3; i++) {
-            html += '<div class="hof-entry">';
-            html += '<span class="hof-medal">' + (MEDALS[i] || (i + 1) + '.') + '</span>';
-            html += '<span class="hof-be-first">open slot</span>';
-            html += '</div>';
+            html += '<div class="hof-song-artist">' + escapeHtml(song.artist) + '</div>';
+            html += '<div class="hof-entries">';
+            song.entries.forEach((entry, i) => {
+              html += '<div class="hof-entry"><span class="hof-medal">' + (MEDALS[i] || (i+1)+'.') + '</span>';
+              html += '<span class="hof-player">' + escapeHtml(entry.player_name) + '</span>';
+              html += '<span class="hof-score">Score: ' + entry.score + '</span></div>';
+            });
+            for (let i = song.entries.length; i < 3; i++) {
+              html += '<div class="hof-entry"><span class="hof-medal">' + (MEDALS[i] || (i+1)+'.') + '</span>';
+              html += '<span class="hof-be-first">open slot</span></div>';
+            }
+            html += '</div></div>';
           }
-          html += '</div></div>';
         }
+        html += '</div></div>';
       }
-
-      html += '</div></div>';
     }
 
     container.innerHTML = html;
@@ -452,17 +517,14 @@
         el.textContent = '\uD83D\uDD79\uFE0F ' + data.total_games.toLocaleString() + ' games played';
         el.style.opacity = '1';
       }
-
       const allTimeMap = {};
       (data.all_time || []).forEach(row => { allTimeMap[row.category] = row.plays; });
       const last24hMap = {};
       (data.last_24h || []).forEach(row => { last24hMap[row.category] = row.plays; });
-
       let hottestCategory = null, hottestPlays = 0;
       Object.entries(last24hMap).forEach(([cat, plays]) => {
         if (plays > hottestPlays) { hottestPlays = plays; hottestCategory = cat; }
       });
-
       let brutalCategory = null, brutalWinRate = Infinity;
       let bullseyeCategory = null, bullseyeWinRate = -Infinity;
       (data.win_rates || []).forEach(row => {
@@ -472,10 +534,8 @@
           if (rate > bullseyeWinRate) { bullseyeWinRate = rate; bullseyeCategory = row.category; }
         }
       });
-
       const now = Date.now();
       const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
-
       const sorted = [...ALL_CATEGORIES].sort((a, b) => (allTimeMap[b.id] || 0) - (allTimeMap[a.id] || 0));
       const list = document.getElementById('category-list');
       list.innerHTML = sorted.map(cat => {
@@ -524,10 +584,7 @@
       window.scrollTo(0, 0);
       document.getElementById('guess-input').focus();
       updateHeader(); updateHintButton(); renderGuesses();
-    } catch (err) {
-      console.error('Start game error:', err);
-      alert('Failed to start game. Please try again.');
-    }
+    } catch (err) { console.error('Start game error:', err); alert('Failed to start game. Please try again.'); }
   }
 
   async function submitGuess() {
@@ -546,8 +603,7 @@
       guesses.push({ guess, barPercent: data.barPercent !== undefined ? data.barPercent : 2, heat: data.heat, hint: data.hint, solved: data.solved });
       input.value = '';
       if (data.solved) {
-        gameWon = true;
-        currentSongId = data.song_id;
+        gameWon = true; currentSongId = data.song_id;
         await showWinState(data.title || guess, data.artist);
       }
       updateHeader(); updateHintButton(); renderGuesses();
@@ -586,8 +642,7 @@
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      revealSecret = true;
-      currentSongId = data.song_id;
+      revealSecret = true; currentSongId = data.song_id;
       document.getElementById('input-area').style.display = 'none';
       const lbHtml = await fetchLeaderboardHtml(data.song_id, null, false);
       document.getElementById('result-area').innerHTML =
@@ -636,10 +691,9 @@
       } else {
         board.forEach((entry, i) => {
           entriesHtml += '<div class="leaderboard-entry">'
-            + '<span class="lb-medal">' + (MEDALS[i] || (i + 1) + '.') + '</span>'
+            + '<span class="lb-medal">' + (MEDALS[i] || (i+1)+'.') + '</span>'
             + '<span class="lb-name">' + escapeHtml(entry.player_name) + '</span>'
-            + '<span class="lb-score">Score: ' + entry.score + '</span>'
-            + '</div>';
+            + '<span class="lb-score">Score: ' + entry.score + '</span></div>';
         });
       }
       let nameInputHtml = '';
@@ -648,8 +702,7 @@
         nameInputHtml = '<div class="lb-qualify-msg">\uD83C\uDFAF You made the leaderboard!</div>'
           + '<div class="lb-name-row">'
           + '<input class="lb-name-input" id="lb-name-input" type="text" maxlength="15" placeholder="Enter your name..."' + prefill + ' onkeydown="if(event.key===\'Enter\')submitLeaderboard(' + songId + ',' + playerScore + ')">'
-          + '<button class="lb-submit-btn" onclick="submitLeaderboard(' + songId + ',' + playerScore + ')">SUBMIT</button>'
-          + '</div>';
+          + '<button class="lb-submit-btn" onclick="submitLeaderboard(' + songId + ',' + playerScore + ')">SUBMIT</button></div>';
       }
       return '<div class="leaderboard-box">'
         + '<div class="leaderboard-title">\uD83C\uDFAF TOP SCORES \u2014 THIS SONG</div>'
@@ -674,10 +727,9 @@
       let entriesHtml = '';
       board.forEach((entry, i) => {
         entriesHtml += '<div class="leaderboard-entry">'
-          + '<span class="lb-medal">' + (MEDALS[i] || (i + 1) + '.') + '</span>'
+          + '<span class="lb-medal">' + (MEDALS[i] || (i+1)+'.') + '</span>'
           + '<span class="lb-name">' + escapeHtml(entry.player_name) + '</span>'
-          + '<span class="lb-score">Score: ' + entry.score + '</span>'
-          + '</div>';
+          + '<span class="lb-score">Score: ' + entry.score + '</span></div>';
       });
       const lbBox = document.querySelector('.leaderboard-box');
       if (lbBox) {
