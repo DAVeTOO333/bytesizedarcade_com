@@ -73,17 +73,25 @@ exports.handler = async (event) => {
       }
     }
 
-    // Calculate Top Sleuths
-    // For each player: total points (30/20/10 per slot) and categories represented
+    // Calculate Top Sleuths + Most Wanted per category
     const sleutMap = {}; // player_name -> { points, categories: Set }
+    const categoryPlayerPoints = {}; // cat -> { player_name -> points }
 
     for (const cat of Object.keys(categoryMap)) {
+      if (!categoryPlayerPoints[cat]) categoryPlayerPoints[cat] = {};
+
       for (const song of Object.values(categoryMap[cat])) {
         song.entries.forEach((entry, slotIndex) => {
           const name = entry.player_name;
+          const pts = SLOT_POINTS[slotIndex] || 0;
+
+          // Global sleuth tracking
           if (!sleutMap[name]) sleutMap[name] = { points: 0, categories: new Set() };
-          sleutMap[name].points += SLOT_POINTS[slotIndex] || 0;
+          sleutMap[name].points += pts;
           sleutMap[name].categories.add(cat);
+
+          // Per-category tracking
+          categoryPlayerPoints[cat][name] = (categoryPlayerPoints[cat][name] || 0) + pts;
         });
       }
     }
@@ -110,10 +118,21 @@ exports.handler = async (event) => {
     const result = [];
 
     for (const cat of CATEGORY_ORDER) {
+      // Most Wanted: player with most points in this category
+      let most_wanted = null;
+      if (categoryPlayerPoints[cat]) {
+        const entries = Object.entries(categoryPlayerPoints[cat]);
+        if (entries.length > 0) {
+          entries.sort((a, b) => b[1] - a[1]);
+          most_wanted = { name: entries[0][0], points: entries[0][1] };
+        }
+      }
+
       if (!categoryMap[cat]) {
         result.push({
           category: cat,
           label: CATEGORY_LABELS[cat] || cat,
+          most_wanted,
           songs: [],
         });
         continue;
@@ -130,6 +149,7 @@ exports.handler = async (event) => {
       result.push({
         category: cat,
         label: CATEGORY_LABELS[cat] || cat,
+        most_wanted,
         songs: songs.slice(0, 20),
       });
     }
