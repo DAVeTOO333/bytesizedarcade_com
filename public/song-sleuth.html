@@ -500,23 +500,7 @@
       btn.classList.remove('copied');
     }, 3500);
   }
-    // Show "copied + paste into Facebook" feedback on the button
-    const original = btn.textContent;
-    btn.textContent = '\uD83D\uDCCB Copied! Paste into Facebook \u2192';
-    btn.classList.add('copied');
-
-    // Open Facebook share dialog after a brief moment so user sees the message
-    setTimeout(() => {
-      window.open(fbUrl, '_blank', 'noopener,noreferrer,width=600,height=400');
-    }, 400);
-
-    // Reset button after 4 seconds
-    setTimeout(() => {
-      btn.textContent = original;
-      btn.classList.remove('copied');
-    }, 4000);
-  }
-
+   
   function showTitle() {
     window.scrollTo(0, 0);
     document.getElementById('title-screen').style.display = 'flex';
