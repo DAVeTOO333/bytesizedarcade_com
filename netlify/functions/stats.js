@@ -30,7 +30,7 @@ exports.handler = async (event) => {
 
       // Latest leaderboard win
       const latestWinRows = await sql`
-        SELECT l.player_name, s.title, s.category
+        SELECT l.player_name, s.title, s.artist, s.category
         FROM leaderboard l
         JOIN songs s ON s.id = l.song_id
         ORDER BY l.achieved_at DESC
