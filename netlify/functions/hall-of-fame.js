@@ -96,7 +96,7 @@ exports.handler = async (event) => {
       }
     }
 
-    // Build sleuth list with sleuth score = points * category count
+    // Build sleuth list
     const sleuths = Object.entries(sleutMap).map(([name, data]) => ({
       name,
       points: data.points,
@@ -104,10 +104,10 @@ exports.handler = async (event) => {
       sleuth_score: data.points * data.categories.size,
     }));
 
-    // Top 3 by raw points (the podium)
+    // Top 10 by raw points
     const podium = [...sleuths]
       .sort((a, b) => b.points - a.points || b.category_count - a.category_count)
-      .slice(0, 3);
+      .slice(0, 10);
 
     // Renaissance Sleuth: highest sleuth_score (points * categories)
     const renaissance = [...sleuths]
