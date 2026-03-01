@@ -50,7 +50,7 @@
       border-radius: 8px; overflow: hidden; display: none;
     }
     .ticker-track {
-      display: flex; white-space: nowrap;
+      display: inline-flex; white-space: nowrap;
       animation: ticker-scroll 18s linear infinite;
     }
     .ticker-track:hover { animation-play-state: paused; }
@@ -62,7 +62,6 @@
     .ticker-item .ti-song { color: #ddd; }
     .ticker-item .ti-artist { color: #8888aa; }
     .ticker-item .ti-cat  { color: #555; }
-    .ticker-sep { color: #333; padding: 0 8px; }
 
     .era-label { font-size: 11px; letter-spacing: 4px; color: #ff6633; margin-bottom: 16px; font-weight: 600; }
     .era-btn {
@@ -420,7 +419,6 @@
 
   function plainCatLabel(cat) {
     const full = categoryLabels[cat] || cat;
-    // Strip leading surrogate pair + optional space, then any remaining non-space prefix
     return full.replace(/^[\uD800-\uDBFF][\uDC00-\uDFFF]\s*/, '').replace(/^\S+\s/, '');
   }
 
@@ -604,17 +602,17 @@
       if (data.latest_win) {
         const lw = data.latest_win;
         const catName = plainCatLabel(lw.category);
-        const itemText = '\uD83D\uDD75\uFE0F\u00a0'
+        const itemHtml = '\uD83D\uDD75\uFE0F\u00a0'
           + '<span class="ti-name">' + escapeHtml(lw.player_name) + '</span>'
           + '\u00a0just cracked\u00a0'
           + '<span class="ti-song">' + escapeHtml(lw.title) + '</span>'
           + '\u00a0by\u00a0'
           + '<span class="ti-artist">' + escapeHtml(lw.artist) + '</span>'
           + '\u00a0<span class="ti-cat">\u00b7 ' + escapeHtml(catName) + '</span>';
-        // Duplicate for seamless loop
         const track = document.getElementById('ticker-track');
-        track.innerHTML = '<div class="ticker-item">' + itemText + '</div>'
-          + '<div class="ticker-item">' + itemText + '</div>';
+        // Duplicate item for seamless looping
+        track.innerHTML = '<div class="ticker-item">' + itemHtml + '</div>'
+                        + '<div class="ticker-item">' + itemHtml + '</div>';
         document.getElementById('ticker-wrap').style.display = 'block';
       }
 
