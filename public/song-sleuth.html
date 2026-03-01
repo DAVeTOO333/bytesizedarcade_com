@@ -462,28 +462,27 @@
     return "#4488ff";
   }
 
-  function buildShareText() {
+  async function shareWin(btn) {
     const guessWord = lastWinGuesses === 1 ? '1 guess' : lastWinGuesses + ' guesses';
     const noHintsBrag = lastWinNoHints ? ' \uD83C\uDFC6 No hints!' : '';
-    return '\uD83D\uDD75\uFE0F I cracked \u201c' + lastWinTitle + '\u201d in ' + guessWord
-      + ' on Song Sleuth! (Score: ' + lastWinScore + ')' + noHintsBrag
-      + '\n\uD83C\uDFB5 Can you beat me? ' + SHARE_URL;
-  }
+    // The brag line goes in title (shown by most share targets as the main text)
+    const shareTitle = '\uD83D\uDD75\uFE0F I cracked \u201c' + lastWinTitle + '\u201d in ' + guessWord + ' on Song Sleuth! (Score: ' + lastWinScore + ')' + noHintsBrag;
+    // text is a fallback body shown in some apps between title and url
+    const shareText = '\uD83C\uDFB5 Can you beat me?';
+    const fullClipboard = shareTitle + '\n' + shareText + '\n' + SHARE_URL;
 
-  async function shareWin(btn) {
-    const text = buildShareText();
     if (navigator.share) {
       try {
-        await navigator.share({ text });
+        await navigator.share({ title: shareTitle, text: shareText, url: SHARE_URL });
         return;
       } catch(e) {
-        // User cancelled or share failed — fall through to clipboard
         if (e.name === 'AbortError') return;
+        // fall through to clipboard
       }
     }
     // Clipboard fallback
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(fullClipboard);
       btn.textContent = '\u2713 COPIED!';
       btn.classList.add('copied');
       setTimeout(() => {
@@ -491,8 +490,7 @@
         btn.classList.remove('copied');
       }, 2500);
     } catch(e) {
-      // Last resort: prompt
-      prompt('Copy and share this:', text);
+      prompt('Copy and share this:', fullClipboard);
     }
   }
 
@@ -537,7 +535,6 @@
     const container = document.getElementById('hof-content');
     let html = '';
 
-    // 1. Renaissance Sleuth
     html += '<div class="renaissance-card">';
     html += '<div class="renaissance-card-title">\uD83D\uDC8E RENAISSANCE SLEUTH</div>';
     html += '<div class="renaissance-row">';
@@ -552,7 +549,6 @@
     }
     html += '</div></div></div>';
 
-    // 2. Top Sleuths
     html += '<div class="top-sleuths-card">';
     html += '<div class="top-sleuths-title">\uD83D\uDD0E TOP SLEUTHS</div>';
     html += '<div class="podium-row">';
@@ -590,7 +586,6 @@
     }
     html += '</div>';
 
-    // 3. Category dropdowns
     if (!categories.length) {
       html += '<div class="hof-loading">No scores yet. Be the first!</div>';
     } else {
@@ -820,7 +815,6 @@
     const noHintsStr = noHints ? ' \u00b7 No hints! \uD83C\uDFC6' : '';
     const artistLine = artist ? '<div style="font-size:14px;color:#8888aa;margin-bottom:8px;">' + escapeHtml(artist) + '</div>' : '';
 
-    // Save for share
     lastWinTitle = title;
     lastWinArtist = artist || '';
     lastWinScore = total;
