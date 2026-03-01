@@ -261,7 +261,7 @@
       transition: all 0.2s; width: 100%;
     }
     .share-btn:hover { background: rgba(100,220,100,0.22); border-color: #64dc64; }
-    .share-btn.copied { color: #aaa; border-color: #444; background: rgba(255,255,255,0.04); }
+    .share-btn.copied { color: #ffaa33; border-color: #ffaa3380; background: rgba(255,170,51,0.08); }
     .leaderboard-box {
       margin-top: 16px; padding: 14px; background: rgba(255,170,51,0.05);
       border: 1px solid #ffaa3330; border-radius: 10px; text-align: left;
@@ -462,36 +462,51 @@
     return "#4488ff";
   }
 
-  async function shareWin(btn) {
+  function buildBragText() {
     const guessWord = lastWinGuesses === 1 ? '1 guess' : lastWinGuesses + ' guesses';
     const noHintsBrag = lastWinNoHints ? ' \uD83C\uDFC6 No hints!' : '';
-    // The brag line goes in title (shown by most share targets as the main text)
-    const shareTitle = '\uD83D\uDD75\uFE0F I cracked \u201c' + lastWinTitle + '\u201d in ' + guessWord + ' on Song Sleuth! (Score: ' + lastWinScore + ')' + noHintsBrag;
-    // text is a fallback body shown in some apps between title and url
-    const shareText = '\uD83C\uDFB5 Can you beat me?';
-    const fullClipboard = shareTitle + '\n' + shareText + '\n' + SHARE_URL;
+    return '\uD83D\uDD75\uFE0F I cracked \u201c' + lastWinTitle + '\u201d in ' + guessWord
+      + ' on Song Sleuth! (Score: ' + lastWinScore + ')' + noHintsBrag
+      + '\n\uD83C\uDFB5 Can you beat me? ' + SHARE_URL;
+  }
 
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: shareTitle, text: shareText, url: SHARE_URL });
-        return;
-      } catch(e) {
-        if (e.name === 'AbortError') return;
-        // fall through to clipboard
-      }
-    }
-    // Clipboard fallback
+  async function shareWin(btn) {
+    const bragText = buildBragText();
+    const fbUrl = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(SHARE_URL);
+
+    // Detect if Facebook is likely the destination — we always do the copy+FB flow
+    // for simplicity and reliability across all platforms
     try {
-      await navigator.clipboard.writeText(fullClipboard);
-      btn.textContent = '\u2713 COPIED!';
-      btn.classList.add('copied');
-      setTimeout(() => {
-        btn.textContent = '\uD83D\uDCE4 SHARE MY WIN';
-        btn.classList.remove('copied');
-      }, 2500);
+      await navigator.clipboard.writeText(bragText);
     } catch(e) {
-      prompt('Copy and share this:', fullClipboard);
+      // clipboard failed — try the Web Share API as fallback
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: bragText, url: SHARE_URL });
+          return;
+        } catch(shareErr) {
+          if (shareErr.name === 'AbortError') return;
+        }
+      }
+      prompt('Copy and share this:', bragText);
+      return;
     }
+
+    // Show "copied + paste into Facebook" feedback on the button
+    const original = btn.textContent;
+    btn.textContent = '\uD83D\uDCCB Copied! Paste into Facebook \u2192';
+    btn.classList.add('copied');
+
+    // Open Facebook share dialog after a brief moment so user sees the message
+    setTimeout(() => {
+      window.open(fbUrl, '_blank', 'noopener,noreferrer,width=600,height=400');
+    }, 400);
+
+    // Reset button after 4 seconds
+    setTimeout(() => {
+      btn.textContent = original;
+      btn.classList.remove('copied');
+    }, 4000);
   }
 
   function showTitle() {
