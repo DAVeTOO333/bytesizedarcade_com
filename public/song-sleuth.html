@@ -25,6 +25,7 @@
       50%  { background: rgba(255,170,51,0.10); box-shadow: 0 0 8px rgba(255,170,51,0.2); }
       100% { background: rgba(255,170,51,0.25); box-shadow: 0 0 16px rgba(255,170,51,0.4); }
     }
+    @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
     #title-screen {
       flex: 1; display: flex; flex-direction: column;
       align-items: center; justify-content: center; padding: 20px;
@@ -38,6 +39,16 @@
     }
     .subtitle { font-size: 12px; color: #8888aa; font-weight: 300; letter-spacing: 2px; text-align: center; line-height: 1.8; }
     .description { font-size: 13px; color: #aaaacc; margin: 20px 0; line-height: 1.6; max-width: 400px; text-align: center; }
+    .latest-win-strip {
+      width: 100%; max-width: 400px; margin-bottom: 16px;
+      padding: 8px 14px; background: rgba(255,102,51,0.06);
+      border: 1px solid #ff663325; border-radius: 8px;
+      font-size: 12px; color: #8888aa; text-align: center;
+      display: none; animation: fadein 0.6s ease;
+    }
+    .latest-win-strip .lw-name { color: #ffaa33; font-family: 'Righteous', cursive; }
+    .latest-win-strip .lw-song { color: #ddd; }
+    .latest-win-strip .lw-cat  { color: #666; }
     .era-label { font-size: 11px; letter-spacing: 4px; color: #ff6633; margin-bottom: 16px; font-weight: 600; }
     .era-btn {
       width: 100%; max-width: 400px; padding: 16px 20px;
@@ -288,6 +299,7 @@
   <div class="description">
     A secret song is chosen. Type song titles and find out how close you are. Use the clues to zero in on the answer.
   </div>
+  <div class="latest-win-strip" id="latest-win-strip"></div>
   <div class="era-label">CHOOSE YOUR CATEGORY</div>
   <div id="category-list">
     <button class="era-btn" onclick="startGame('80s_top10')">&#127925; 80's TOP 10 HITS</button>
@@ -389,6 +401,12 @@
     '2000s_hits':    "\uD83D\uDCBF 2000's Hits",
   };
 
+  // Strip emoji prefix to get plain category name for the latest win strip
+  function plainCatLabel(cat) {
+    const full = categoryLabels[cat] || cat;
+    return full.replace(/^[\uD800-\uDBFF][\uDC00-\uDFFF]\s*/, '').replace(/^\S+\s/, '');
+  }
+
   const MEDALS = ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'];
   const PODIUM_CLASSES = ['first', 'second', 'third'];
 
@@ -438,14 +456,12 @@
   function scrollToSong(songId) {
     const row = document.querySelector('.hof-song-row[data-song-id="' + songId + '"]');
     if (!row) return;
-    // Open the parent category body
     const body = row.closest('.hof-category-body');
     const header = body ? body.previousElementSibling : null;
     if (body && header) {
       body.classList.add('open');
       header.classList.add('open');
     }
-    // Scroll and flash
     setTimeout(() => {
       row.scrollIntoView({ behavior: 'smooth', block: 'center' });
       row.classList.add('highlighted');
@@ -457,7 +473,6 @@
     const container = document.getElementById('hof-content');
     let html = '';
 
-    // TOP SLEUTHS CARD
     html += '<div class="top-sleuths-card">';
     html += '<div class="top-sleuths-title">TOP SLEUTHS</div>';
     html += '<div class="podium-row">';
@@ -482,7 +497,6 @@
     }
     html += '</div>';
 
-    // RENAISSANCE SLEUTH
     html += '<hr class="renaissance-divider">';
     html += '<div class="renaissance-row">';
     html += '<span class="renaissance-diamond">\uD83D\uDC8E</span>';
@@ -496,9 +510,8 @@
       html += '<div class="renaissance-empty">Play across multiple categories to claim this title</div>';
     }
     html += '</div></div>';
-    html += '</div>'; // end top-sleuths-card
+    html += '</div>';
 
-    // CATEGORY DROPDOWNS
     if (!categories.length) {
       html += '<div class="hof-loading">No scores yet. Be the first!</div>';
     } else {
@@ -512,7 +525,6 @@
         html += '</div>';
         html += '<div class="hof-category-body">';
 
-        // MOST WANTED banner
         if (cat.most_wanted) {
           html += '<div class="most-wanted-row">';
           html += '<span class="most-wanted-icon">\uD83D\uDD75\uFE0F</span>';
@@ -570,6 +582,18 @@
         el.textContent = '\uD83D\uDD79\uFE0F ' + data.total_games.toLocaleString() + ' games played';
         el.style.opacity = '1';
       }
+
+      // Latest win strip
+      if (data.latest_win) {
+        const lw = data.latest_win;
+        const strip = document.getElementById('latest-win-strip');
+        const catName = plainCatLabel(lw.category);
+        strip.innerHTML = '\uD83D\uDD75\uFE0F <span class="lw-name">' + escapeHtml(lw.player_name) + '</span>'
+          + ' just cracked <span class="lw-song">&ldquo;' + escapeHtml(lw.title) + '&rdquo;</span>'
+          + ' <span class="lw-cat">&middot; ' + escapeHtml(catName) + '</span>';
+        strip.style.display = 'block';
+      }
+
       const allTimeMap = {};
       (data.all_time || []).forEach(row => { allTimeMap[row.category] = row.plays; });
       const last24hMap = {};
