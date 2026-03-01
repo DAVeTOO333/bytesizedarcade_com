@@ -28,6 +28,16 @@ exports.handler = async (event) => {
                                     ORDER BY plays DESC
                                         `;
 
+      // Latest leaderboard win
+      const latestWinRows = await sql`
+        SELECT l.player_name, s.title, s.category
+        FROM leaderboard l
+        JOIN songs s ON s.id = l.song_id
+        ORDER BY l.achieved_at DESC
+        LIMIT 1
+      `;
+      const latestWin = latestWinRows.length ? latestWinRows[0] : null;
+
       // Win rates per category (only categories with 20+ games)
       const winRates = await sql`
             SELECT
@@ -48,6 +58,7 @@ exports.handler = async (event) => {
                         all_time: allTime,
                         last_24h: recent,
                         win_rates: winRates,
+                        latest_win: latestWin,
               }),
       };
     } catch (err) {
