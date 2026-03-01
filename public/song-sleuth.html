@@ -472,26 +472,34 @@
 
   async function shareWin(btn) {
     const bragText = buildBragText();
-    const fbUrl = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(SHARE_URL);
+    const original = btn.textContent;
 
-    // Detect if Facebook is likely the destination — we always do the copy+FB flow
-    // for simplicity and reliability across all platforms
+    // Try native share sheet first (iOS/Android)
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: '🕵️ Song Sleuth', text: bragText });
+        return;
+      } catch(e) {
+        if (e.name === 'AbortError') return;
+        // fall through to clipboard
+      }
+    }
+
+    // Clipboard fallback — works everywhere including FB in-app browser
     try {
       await navigator.clipboard.writeText(bragText);
     } catch(e) {
-      // clipboard failed — try the Web Share API as fallback
-      if (navigator.share) {
-        try {
-          await navigator.share({ title: bragText, url: SHARE_URL });
-          return;
-        } catch(shareErr) {
-          if (shareErr.name === 'AbortError') return;
-        }
-      }
-      prompt('Copy and share this:', bragText);
+      prompt('Copy this and share it anywhere!', bragText);
       return;
     }
 
+    btn.textContent = '📋 Copied! Paste anywhere to share';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = original;
+      btn.classList.remove('copied');
+    }, 3500);
+  }
     // Show "copied + paste into Facebook" feedback on the button
     const original = btn.textContent;
     btn.textContent = '\uD83D\uDCCB Copied! Paste into Facebook \u2192';
