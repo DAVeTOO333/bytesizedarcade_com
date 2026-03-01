@@ -25,7 +25,10 @@
       50%  { background: rgba(255,170,51,0.10); box-shadow: 0 0 8px rgba(255,170,51,0.2); }
       100% { background: rgba(255,170,51,0.25); box-shadow: 0 0 16px rgba(255,170,51,0.4); }
     }
-    @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes ticker-scroll {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
     #title-screen {
       flex: 1; display: flex; flex-direction: column;
       align-items: center; justify-content: center; padding: 20px;
@@ -39,16 +42,28 @@
     }
     .subtitle { font-size: 12px; color: #8888aa; font-weight: 300; letter-spacing: 2px; text-align: center; line-height: 1.8; }
     .description { font-size: 13px; color: #aaaacc; margin: 20px 0; line-height: 1.6; max-width: 400px; text-align: center; }
-    .latest-win-strip {
+
+    /* Ticker */
+    .ticker-wrap {
       width: 100%; max-width: 400px; margin-bottom: 16px;
-      padding: 8px 14px; background: rgba(255,102,51,0.06);
-      border: 1px solid #ff663325; border-radius: 8px;
-      font-size: 12px; color: #8888aa; text-align: center;
-      display: none; animation: fadein 0.6s ease;
+      background: rgba(255,102,51,0.06); border: 1px solid #ff663325;
+      border-radius: 8px; overflow: hidden; display: none;
     }
-    .latest-win-strip .lw-name { color: #ffaa33; font-family: 'Righteous', cursive; }
-    .latest-win-strip .lw-song { color: #ddd; }
-    .latest-win-strip .lw-cat  { color: #666; }
+    .ticker-track {
+      display: flex; white-space: nowrap;
+      animation: ticker-scroll 18s linear infinite;
+    }
+    .ticker-track:hover { animation-play-state: paused; }
+    .ticker-item {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 32px; font-size: 12px; color: #8888aa; flex-shrink: 0;
+    }
+    .ticker-item .ti-name { color: #ffaa33; font-family: 'Righteous', cursive; }
+    .ticker-item .ti-song { color: #ddd; }
+    .ticker-item .ti-artist { color: #8888aa; }
+    .ticker-item .ti-cat  { color: #555; }
+    .ticker-sep { color: #333; padding: 0 8px; }
+
     .era-label { font-size: 11px; letter-spacing: 4px; color: #ff6633; margin-bottom: 16px; font-weight: 600; }
     .era-btn {
       width: 100%; max-width: 400px; padding: 16px 20px;
@@ -299,7 +314,9 @@
   <div class="description">
     A secret song is chosen. Type song titles and find out how close you are. Use the clues to zero in on the answer.
   </div>
-  <div class="latest-win-strip" id="latest-win-strip"></div>
+  <div class="ticker-wrap" id="ticker-wrap">
+    <div class="ticker-track" id="ticker-track"></div>
+  </div>
   <div class="era-label">CHOOSE YOUR CATEGORY</div>
   <div id="category-list">
     <button class="era-btn" onclick="startGame('80s_top10')">&#127925; 80's TOP 10 HITS</button>
@@ -401,9 +418,9 @@
     '2000s_hits':    "\uD83D\uDCBF 2000's Hits",
   };
 
-  // Strip emoji prefix to get plain category name for the latest win strip
   function plainCatLabel(cat) {
     const full = categoryLabels[cat] || cat;
+    // Strip leading surrogate pair + optional space, then any remaining non-space prefix
     return full.replace(/^[\uD800-\uDBFF][\uDC00-\uDFFF]\s*/, '').replace(/^\S+\s/, '');
   }
 
@@ -583,15 +600,22 @@
         el.style.opacity = '1';
       }
 
-      // Latest win strip
+      // Ticker
       if (data.latest_win) {
         const lw = data.latest_win;
-        const strip = document.getElementById('latest-win-strip');
         const catName = plainCatLabel(lw.category);
-        strip.innerHTML = '\uD83D\uDD75\uFE0F <span class="lw-name">' + escapeHtml(lw.player_name) + '</span>'
-          + ' just cracked <span class="lw-song">&ldquo;' + escapeHtml(lw.title) + '&rdquo;</span>'
-          + ' <span class="lw-cat">&middot; ' + escapeHtml(catName) + '</span>';
-        strip.style.display = 'block';
+        const itemText = '\uD83D\uDD75\uFE0F\u00a0'
+          + '<span class="ti-name">' + escapeHtml(lw.player_name) + '</span>'
+          + '\u00a0just cracked\u00a0'
+          + '<span class="ti-song">' + escapeHtml(lw.title) + '</span>'
+          + '\u00a0by\u00a0'
+          + '<span class="ti-artist">' + escapeHtml(lw.artist) + '</span>'
+          + '\u00a0<span class="ti-cat">\u00b7 ' + escapeHtml(catName) + '</span>';
+        // Duplicate for seamless loop
+        const track = document.getElementById('ticker-track');
+        track.innerHTML = '<div class="ticker-item">' + itemText + '</div>'
+          + '<div class="ticker-item">' + itemText + '</div>';
+        document.getElementById('ticker-wrap').style.display = 'block';
       }
 
       const allTimeMap = {};
