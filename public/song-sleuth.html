@@ -29,6 +29,12 @@
       0%   { transform: translateX(0); }
       100% { transform: translateX(-50%); }
     }
+
+    /* Shared screen wrapper — centers and caps width on desktop */
+    .screen-inner {
+      width: 100%; max-width: 480px; margin: 0 auto;
+    }
+
     #title-screen {
       flex: 1; display: flex; flex-direction: column;
       align-items: center; justify-content: center; padding: 20px;
@@ -91,7 +97,7 @@
     #category-list { width: 100%; max-width: 400px; display: flex; flex-direction: column; }
 
     /* Hall of Fame screen */
-    #hof-screen { display: none; flex: 1; flex-direction: column; padding: 16px; overflow-y: auto; }
+    #hof-screen { display: none; flex: 1; flex-direction: column; overflow-y: auto; }
     .hof-header {
       display: flex; align-items: center; gap: 12px;
       margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #ffffff10;
@@ -206,7 +212,7 @@
     .see-rank-btn:hover { background: rgba(100,149,237,0.22); border-color: #6495ed; }
 
     /* Game screen */
-    #game-screen { display: none; flex: 1; flex-direction: column; padding: 16px; }
+    #game-screen { display: none; flex: 1; flex-direction: column; overflow-y: auto; }
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .header-title { font-family: 'Righteous', cursive; font-size: 20px; color: #ff6633; cursor: pointer; }
     .header-info { font-size: 12px; color: #8888aa; }
@@ -344,42 +350,46 @@
 
 <!-- HALL OF FAME SCREEN -->
 <div id="hof-screen">
-  <div class="hof-header">
-    <button class="hof-back-btn" onclick="showTitle()">&larr; BACK</button>
-    <div class="hof-screen-title">&#127942; HALL OF FAME</div>
-    <div style="width:60px"></div>
-  </div>
-  <div id="hof-content">
-    <div class="hof-loading">Loading...</div>
+  <div class="screen-inner" style="padding: 16px;">
+    <div class="hof-header">
+      <button class="hof-back-btn" onclick="showTitle()">&larr; BACK</button>
+      <div class="hof-screen-title">&#127942; HALL OF FAME</div>
+      <div style="width:60px"></div>
+    </div>
+    <div id="hof-content">
+      <div class="hof-loading">Loading...</div>
+    </div>
   </div>
 </div>
 
 <!-- GAME SCREEN -->
 <div id="game-screen">
-  <div class="header">
-    <div class="header-title" onclick="showTitle()">SONG SLEUTH</div>
-    <div style="display:flex;align-items:center;gap:12px;">
-      <span class="header-info" id="header-info">&#127925; 80's Top 10 &middot; Guesses: 0</span>
-      <button class="header-btn" id="action-btn" onclick="handleAction()">GIVE UP</button>
+  <div class="screen-inner" style="padding: 16px; display: flex; flex-direction: column; flex: 1;">
+    <div class="header">
+      <div class="header-title" onclick="showTitle()">SONG SLEUTH</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span class="header-info" id="header-info">&#127925; 80's Top 10 &middot; Guesses: 0</span>
+        <button class="header-btn" id="action-btn" onclick="handleAction()">GIVE UP</button>
+      </div>
     </div>
-  </div>
-  <div id="input-area">
-    <div class="input-row">
-      <input type="text" class="guess-input" id="guess-input" placeholder="Type a song title..." onkeydown="if(event.key==='Enter')submitGuess()">
-      <button class="guess-btn" id="guess-btn" onclick="submitGuess()">GUESS</button>
+    <div id="input-area">
+      <div class="input-row">
+        <input type="text" class="guess-input" id="guess-input" placeholder="Type a song title..." onkeydown="if(event.key==='Enter')submitGuess()">
+        <button class="guess-btn" id="guess-btn" onclick="submitGuess()">GUESS</button>
+      </div>
+      <div class="info-row">
+        <span class="db-count" id="db-count"></span>
+        <button class="hint-btn locked" id="hint-btn" onclick="requestHint()">&#128161; HINT (guess first)</button>
+      </div>
+      <div class="hints-box" id="hints-box" style="display:none"></div>
     </div>
-    <div class="info-row">
-      <span class="db-count" id="db-count"></span>
-      <button class="hint-btn locked" id="hint-btn" onclick="requestHint()">&#128161; HINT (guess first)</button>
-    </div>
-    <div class="hints-box" id="hints-box" style="display:none"></div>
-  </div>
-  <div id="result-area"></div>
-  <div class="guesses-container" id="guesses-container">
-    <div class="empty-state" id="empty-state">
-      <div class="empty-emoji">&#127925;</div>
-      <div class="empty-text">A secret song has been chosen</div>
-      <div class="empty-sub" id="empty-sub"></div>
+    <div id="result-area"></div>
+    <div class="guesses-container" id="guesses-container">
+      <div class="empty-state" id="empty-state">
+        <div class="empty-emoji">&#127925;</div>
+        <div class="empty-text">A secret song has been chosen</div>
+        <div class="empty-sub" id="empty-sub"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -610,7 +620,6 @@
           + '<span class="ti-artist">' + escapeHtml(lw.artist) + '</span>'
           + '\u00a0<span class="ti-cat">\u00b7 ' + escapeHtml(catName) + '</span>';
         const track = document.getElementById('ticker-track');
-        // Duplicate item for seamless looping
         track.innerHTML = '<div class="ticker-item">' + itemHtml + '</div>'
                         + '<div class="ticker-item">' + itemHtml + '</div>';
         document.getElementById('ticker-wrap').style.display = 'block';
