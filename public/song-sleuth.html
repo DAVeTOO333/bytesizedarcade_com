@@ -114,7 +114,25 @@
       flex: 1; text-align: center;
     }
 
-    /* Top Sleuths podium */
+    /* Renaissance card */
+    .renaissance-card {
+      background: rgba(100,149,237,0.07); border: 1px solid #6495ed30;
+      border-radius: 12px; padding: 16px; margin-bottom: 16px;
+    }
+    .renaissance-card-title {
+      font-family: 'Righteous', cursive; font-size: 11px; letter-spacing: 3px;
+      color: #6495ed; text-align: center; margin-bottom: 12px;
+    }
+    .renaissance-row {
+      display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+      background: rgba(100,149,237,0.08); border: 1px solid #6495ed20; border-radius: 8px;
+    }
+    .renaissance-diamond { font-size: 20px; flex-shrink: 0; }
+    .renaissance-name { font-family: 'Righteous', cursive; font-size: 15px; color: #eee; }
+    .renaissance-meta { font-size: 10px; color: #6495ed99; margin-top: 2px; }
+    .renaissance-empty { font-size: 12px; color: #444; font-style: italic; text-align: center; padding: 4px 0; }
+
+    /* Top Sleuths card */
     .top-sleuths-card {
       background: rgba(255,170,51,0.06); border: 1px solid #ffaa3330;
       border-radius: 12px; padding: 16px; margin-bottom: 20px;
@@ -123,7 +141,7 @@
       font-family: 'Righteous', cursive; font-size: 11px; letter-spacing: 3px;
       color: #ffaa33; text-align: center; margin-bottom: 14px;
     }
-    .podium-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .podium-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
     .podium-entry {
       display: flex; align-items: center; gap: 10px; padding: 8px 12px;
       background: rgba(255,255,255,0.04); border-radius: 8px;
@@ -137,17 +155,15 @@
     .podium-cats { font-size: 10px; color: #555; white-space: nowrap; }
     .podium-empty { font-size: 12px; color: #444; font-style: italic; text-align: center; padding: 8px 0; }
 
-    /* Renaissance Sleuth */
-    .renaissance-divider { border: none; border-top: 1px solid #ffffff10; margin: 12px 0; }
-    .renaissance-row {
-      display: flex; align-items: center; gap: 10px; padding: 8px 12px;
-      background: rgba(100,149,237,0.08); border: 1px solid #6495ed30; border-radius: 8px;
+    /* Also-ran list (4–10) */
+    .also-ran-divider { border: none; border-top: 1px solid #ffffff08; margin: 10px 0 8px; }
+    .also-ran-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 5px 12px; font-size: 12px;
     }
-    .renaissance-diamond { font-size: 20px; flex-shrink: 0; }
-    .renaissance-label { font-size: 10px; letter-spacing: 2px; color: #6495ed; font-family: 'Righteous', cursive; }
-    .renaissance-name { font-family: 'Righteous', cursive; font-size: 14px; color: #eee; }
-    .renaissance-meta { font-size: 10px; color: #555; margin-top: 1px; }
-    .renaissance-empty { font-size: 12px; color: #444; font-style: italic; }
+    .also-ran-rank { font-size: 11px; color: #555; width: 22px; text-align: center; flex-shrink: 0; font-family: 'Righteous', cursive; }
+    .also-ran-name { flex: 1; color: #aaa; font-family: 'Righteous', cursive; }
+    .also-ran-pts { font-size: 11px; color: #666; white-space: nowrap; }
 
     /* Category dropdowns */
     .hof-category-section { margin-bottom: 12px; }
@@ -498,35 +514,12 @@
     const container = document.getElementById('hof-content');
     let html = '';
 
-    html += '<div class="top-sleuths-card">';
-    html += '<div class="top-sleuths-title">TOP SLEUTHS</div>';
-    html += '<div class="podium-row">';
-    if (podium.length === 0) {
-      html += '<div class="podium-empty">No scores yet — be the first on the board!</div>';
-    } else {
-      podium.forEach((sleuth, i) => {
-        const catWord = sleuth.category_count === 1 ? '1 category' : sleuth.category_count + ' categories';
-        html += '<div class="podium-entry ' + PODIUM_CLASSES[i] + '">';
-        html += '<span class="podium-medal">' + MEDALS[i] + '</span>';
-        html += '<span class="podium-name">' + escapeHtml(sleuth.name) + '</span>';
-        html += '<span class="podium-pts">' + sleuth.points + ' pts</span>';
-        html += '<span class="podium-cats">' + catWord + '</span>';
-        html += '</div>';
-      });
-      for (let i = podium.length; i < 3; i++) {
-        html += '<div class="podium-entry ' + PODIUM_CLASSES[i] + '">';
-        html += '<span class="podium-medal">' + MEDALS[i] + '</span>';
-        html += '<span class="podium-name" style="color:#444;font-style:italic;">open</span>';
-        html += '</div>';
-      }
-    }
-    html += '</div>';
-
-    html += '<hr class="renaissance-divider">';
+    // 1. Renaissance Sleuth — top billing
+    html += '<div class="renaissance-card">';
+    html += '<div class="renaissance-card-title">\uD83D\uDC8E RENAISSANCE SLEUTH</div>';
     html += '<div class="renaissance-row">';
     html += '<span class="renaissance-diamond">\uD83D\uDC8E</span>';
     html += '<div style="flex:1">';
-    html += '<div class="renaissance-label">RENAISSANCE SLEUTH</div>';
     if (renaissance) {
       const catWord = renaissance.category_count === 1 ? '1 category' : renaissance.category_count + ' categories';
       html += '<div class="renaissance-name">' + escapeHtml(renaissance.name) + '</div>';
@@ -537,6 +530,51 @@
     html += '</div></div>';
     html += '</div>';
 
+    // 2. Top Sleuths — podium (1–3) + also-rans (4–10)
+    html += '<div class="top-sleuths-card">';
+    html += '<div class="top-sleuths-title">TOP SLEUTHS</div>';
+
+    // Podium: top 3
+    html += '<div class="podium-row">';
+    if (podium.length === 0) {
+      html += '<div class="podium-empty">No scores yet — be the first on the board!</div>';
+    } else {
+      const top3 = podium.slice(0, 3);
+      top3.forEach((sleuth, i) => {
+        const catWord = sleuth.category_count === 1 ? '1 category' : sleuth.category_count + ' categories';
+        html += '<div class="podium-entry ' + PODIUM_CLASSES[i] + '">';
+        html += '<span class="podium-medal">' + MEDALS[i] + '</span>';
+        html += '<span class="podium-name">' + escapeHtml(sleuth.name) + '</span>';
+        html += '<span class="podium-pts">' + sleuth.points + ' pts</span>';
+        html += '<span class="podium-cats">' + catWord + '</span>';
+        html += '</div>';
+      });
+      for (let i = top3.length; i < 3; i++) {
+        html += '<div class="podium-entry ' + PODIUM_CLASSES[i] + '">';
+        html += '<span class="podium-medal">' + MEDALS[i] + '</span>';
+        html += '<span class="podium-name" style="color:#444;font-style:italic;">open</span>';
+        html += '</div>';
+      }
+    }
+    html += '</div>';
+
+    // Also-rans: places 4–10
+    const alsoRans = podium.slice(3, 10);
+    if (alsoRans.length > 0) {
+      html += '<hr class="also-ran-divider">';
+      alsoRans.forEach((sleuth, i) => {
+        const rank = i + 4;
+        html += '<div class="also-ran-row">';
+        html += '<span class="also-ran-rank">' + rank + '.</span>';
+        html += '<span class="also-ran-name">' + escapeHtml(sleuth.name) + '</span>';
+        html += '<span class="also-ran-pts">' + sleuth.points + ' pts</span>';
+        html += '</div>';
+      });
+    }
+
+    html += '</div>'; // end top-sleuths-card
+
+    // 3. Category dropdowns
     if (!categories.length) {
       html += '<div class="hof-loading">No scores yet. Be the first!</div>';
     } else {
