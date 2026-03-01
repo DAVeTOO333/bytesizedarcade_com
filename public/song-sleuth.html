@@ -254,6 +254,14 @@
       border-radius: 6px; color: #ff6633; font-size: 14px;
       font-family: 'Righteous', cursive; padding: 8px 24px; cursor: pointer;
     }
+    .share-btn {
+      margin-top: 8px; background: rgba(100,220,100,0.12); border: 1px solid #64dc6460;
+      border-radius: 6px; color: #64dc64; font-size: 14px;
+      font-family: 'Righteous', cursive; padding: 8px 24px; cursor: pointer;
+      transition: all 0.2s; width: 100%;
+    }
+    .share-btn:hover { background: rgba(100,220,100,0.22); border-color: #64dc64; }
+    .share-btn.copied { color: #aaa; border-color: #444; background: rgba(255,255,255,0.04); }
     .leaderboard-box {
       margin-top: 16px; padding: 14px; background: rgba(255,170,51,0.05);
       border: 1px solid #ffaa3330; border-radius: 10px; text-align: left;
@@ -432,12 +440,14 @@
 
   const MEDALS = ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'];
   const PODIUM_CLASSES = ['first', 'second', 'third'];
+  const SHARE_URL = 'https://bytesizedarcade.com/song-sleuth.html';
 
   let sessionId = null, songCount = 0, guesses = [], hintsUsed = 0, hintMessages = [];
   let hintPenaltyTotal = 0, artistHintUsed = false, titleHintUsed = false;
   let fullArtistUsed = false, fullTitleUsed = false;
   let gameWon = false, revealSecret = false, currentCategory = '80s_top10';
   let currentSongId = null, sessionPlayerName = null;
+  let lastWinTitle = '', lastWinArtist = '', lastWinScore = 0, lastWinGuesses = 0, lastWinNoHints = false;
   const HINT_PENALTIES = [0, 2, 3, 4, 5];
 
   try { sessionPlayerName = localStorage.getItem('songSleuthPlayerName') || null; } catch(e) {}
@@ -450,6 +460,40 @@
     if (heat.includes("LUKEWARM")) return "#ffff33";
     if (heat.includes("COOL")) return "#66ffff";
     return "#4488ff";
+  }
+
+  function buildShareText() {
+    const guessWord = lastWinGuesses === 1 ? '1 guess' : lastWinGuesses + ' guesses';
+    const noHintsBrag = lastWinNoHints ? ' \uD83C\uDFC6 No hints!' : '';
+    return '\uD83D\uDD75\uFE0F I cracked \u201c' + lastWinTitle + '\u201d in ' + guessWord
+      + ' on Song Sleuth! (Score: ' + lastWinScore + ')' + noHintsBrag
+      + '\n\uD83C\uDFB5 Can you beat me? ' + SHARE_URL;
+  }
+
+  async function shareWin(btn) {
+    const text = buildShareText();
+    if (navigator.share) {
+      try {
+        await navigator.share({ text });
+        return;
+      } catch(e) {
+        // User cancelled or share failed — fall through to clipboard
+        if (e.name === 'AbortError') return;
+      }
+    }
+    // Clipboard fallback
+    try {
+      await navigator.clipboard.writeText(text);
+      btn.textContent = '\u2713 COPIED!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = '\uD83D\uDCE4 SHARE MY WIN';
+        btn.classList.remove('copied');
+      }, 2500);
+    } catch(e) {
+      // Last resort: prompt
+      prompt('Copy and share this:', text);
+    }
   }
 
   function showTitle() {
@@ -672,6 +716,7 @@
       sessionId = null; guesses = []; hintsUsed = 0; hintMessages = []; hintPenaltyTotal = 0;
       artistHintUsed = false; titleHintUsed = false; fullArtistUsed = false; fullTitleUsed = false;
       gameWon = false; revealSecret = false; currentCategory = category; currentSongId = null;
+      lastWinTitle = ''; lastWinArtist = ''; lastWinScore = 0; lastWinGuesses = 0; lastWinNoHints = false;
       document.getElementById('header-info').textContent = (categoryLabels[category] || category) + ' \u00b7 Guesses: 0';
       document.getElementById('hints-box').style.display = 'none';
       document.getElementById('hints-box').innerHTML = '';
@@ -771,15 +816,26 @@
     const guessCount = guesses.length;
     const penaltyStr = hintPenaltyTotal > 0 ? ' + ' + hintPenaltyTotal + ' hint penalty' : '';
     const total = guessCount + hintPenaltyTotal;
-    const noHints = hintsUsed === 0 ? ' \u00b7 No hints! \uD83C\uDFC6' : '';
+    const noHints = hintsUsed === 0;
+    const noHintsStr = noHints ? ' \u00b7 No hints! \uD83C\uDFC6' : '';
     const artistLine = artist ? '<div style="font-size:14px;color:#8888aa;margin-bottom:8px;">' + escapeHtml(artist) + '</div>' : '';
+
+    // Save for share
+    lastWinTitle = title;
+    lastWinArtist = artist || '';
+    lastWinScore = total;
+    lastWinGuesses = guessCount;
+    lastWinNoHints = noHints;
+
     const lbHtml = await fetchLeaderboardHtml(currentSongId, total, true);
     document.getElementById('result-area').innerHTML =
       '<div class="result-box win"><div class="result-emoji">\uD83C\uDF89</div>'
       + '<div class="result-title">YOU GOT IT!</div>'
       + '<div class="result-song">' + escapeHtml(title) + '</div>' + artistLine
-      + '<div class="result-stats">' + guessCount + ' guess' + (guessCount !== 1 ? 'es' : '') + penaltyStr + ' = Score: ' + total + noHints + '</div>'
-      + '<button class="play-again-btn" onclick="startGame(currentCategory)">PLAY AGAIN</button></div>'
+      + '<div class="result-stats">' + guessCount + ' guess' + (guessCount !== 1 ? 'es' : '') + penaltyStr + ' = Score: ' + total + noHintsStr + '</div>'
+      + '<button class="play-again-btn" onclick="startGame(currentCategory)">PLAY AGAIN</button>'
+      + '<button class="share-btn" id="share-btn" onclick="shareWin(this)">\uD83D\uDCE4 SHARE MY WIN</button>'
+      + '</div>'
       + lbHtml;
     document.getElementById('action-btn').textContent = 'NEW GAME';
   }
