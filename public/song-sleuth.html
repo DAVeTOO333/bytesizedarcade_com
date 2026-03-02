@@ -917,19 +917,13 @@
   function updateHintButton() {
     const btn = document.getElementById('hint-btn');
     if (gameWon || revealSecret || hintsUsed >= 5) { btn.className = 'hint-btn all-used'; return; }
-    const required = hintsUsed + 1;
-    const available = guesses.length >= required;
-    const penalty = HINT_PENALTIES[hintsUsed];
+const penalty = HINT_PENALTIES[hintsUsed];
     const isFree = penalty === 0;
     const remaining = 5 - hintsUsed;
-    if (available) {
-      if (isFree) { btn.className = 'hint-btn free'; btn.textContent = '\uD83D\uDCA1 HINT (FREE \u00b7 ' + remaining + ' left)'; }
-      else { btn.className = 'hint-btn available'; btn.textContent = '\uD83D\uDCA1 HINT (+' + penalty + ' penalty \u00b7 ' + remaining + ' left)'; }
-    } else {
-      btn.className = 'hint-btn locked';
-      const diff = required - guesses.length;
-      btn.textContent = '\uD83D\uDD12 HINT (' + diff + ' more guess' + (diff !== 1 ? 'es' : '') + ' to unlock)';
-    }
+    const consecutiveSurcharge = (consecutiveHints > 0 && hintsUsed > 0) ? 1 : 0;
+    const displayPenalty = penalty + consecutiveSurcharge;
+    if (isFree) { btn.className = 'hint-btn free'; btn.textContent = '\uD83D\uDCA1 HINT (FREE \u00b7 ' + remaining + ' left)'; }
+    else { btn.className = 'hint-btn available'; btn.textContent = '\uD83D\uDCA1 HINT (+' + displayPenalty + ' penalty \u00b7 ' + remaining + ' left)'; }
   }
 
   function renderHints() {
