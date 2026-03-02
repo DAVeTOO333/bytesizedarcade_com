@@ -56,10 +56,6 @@ const GENERIC_TAGS = new Set([
 
 const HINT_PENALTIES = [0, 2, 3, 4, 5];
 
-function getRequiredGuesses(hintIndex) {
-  return hintIndex + 1;
-}
-
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") {
     return { statusCode: 200, body: "" };
@@ -70,7 +66,7 @@ exports.handler = async (event) => {
 
   try {
     const sql = getDb();
-    const { session_id, hints_used, artist_hint_used, title_hint_used, full_artist_used, full_title_used, guesses_count } = JSON.parse(event.body || "{}");
+    const { session_id, hints_used, artist_hint_used, title_hint_used, full_artist_used, full_title_used, consecutive_hints } = JSON.parse(event.body || "{}");
 
     if (!session_id) {
       return { statusCode: 400, body: JSON.stringify({ error: "Missing session_id" }) };
@@ -78,11 +74,6 @@ exports.handler = async (event) => {
 
     if (hints_used >= 5) {
       return { statusCode: 400, body: JSON.stringify({ error: "All hints used" }) };
-    }
-
-    const required = getRequiredGuesses(hints_used);
-    if (guesses_count < required) {
-      return { statusCode: 400, body: JSON.stringify({ error: "Not enough guesses to unlock hint" }) };
     }
 
     const sessions = await sql`
@@ -164,7 +155,7 @@ exports.handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify({
         hint,
-        penalty: HINT_PENALTIES[hints_used],
+        penalty: HINT_PENALTIES[hints_used] + ((consecutive_hints > 0 && hints_used > 0) ? 1 : 0),
         artist_hint_used: newArtistHintUsed,
         title_hint_used: newTitleHintUsed,
         full_artist_used: newFullArtistUsed,
